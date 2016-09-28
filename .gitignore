@@ -1,3 +1,14 @@
+#2016/9/28ºöÂÔ´óÎÄ¼ş
+/temp-img/*
+/associateFiles/*
+/private/*
+/piotr_toolbox/*
+/models/*
+
+*.jpg
+*.txt
+
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
