@@ -1,4 +1,4 @@
-function model = edgesTrain( varargin )
+function model = t_edgesTrain( varargin )
 % Train structured edge detector.
 %
 % For an introductory tutorial please see edgesDemo.m.
@@ -68,7 +68,7 @@ function model = edgesTrain( varargin )
 % Licensed under the MSR-LA Full Rights License [see license.txt]
 
 % get default parameters
-dfs={'imWidth',32, 'gtWidth',16, 'nPos',5e5, 'nNeg',5e5, 'nImgs',inf, ...
+dfs={'imWidth',32, 'gtWidth',16, 'nPos',5e5, 'nNeg',10e5, 'nImgs',inf, ...
   'nTrees',8, 'fracFtrs',1/4, 'minCount',1, 'minChild',8, ...
   'maxDepth',64, 'discretize','pca', 'nSamples',256, 'nClasses',2, ...
   'split','gini', 'nOrients',4, 'grdSmooth',0, 'chnSmooth',2, ...
@@ -81,7 +81,7 @@ if(nargin==0), model=opts; return; end
 
 % if forest exists load it and return
 cd(fileparts(mfilename('fullpath')));
-forestDir = [opts.modelDir '/forest_general/'];
+forestDir = [opts.modelDir '/forest/'];
 forestFn = [forestDir opts.modelFnm];
 if(exist([forestFn '.mat'], 'file'))
   load([forestFn '.mat']); return; end

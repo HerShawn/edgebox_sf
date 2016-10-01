@@ -4,9 +4,11 @@
 /private/*
 /piotr_toolbox/*
 /models/*
+/BSR/*
 
 *.jpg
 *.txt
+*.bmp
 
 
 # Windows image file caches
