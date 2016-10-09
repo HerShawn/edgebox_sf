@@ -63,7 +63,7 @@ for indexImg = 157:157
         %欧拉数和（面积排在前两位）结合起来用
         [~,index] = sortrows([mserStats.Area].'); 
         thresh_Area=mserStats(index(end-2)).Area;
-        filterIdx = filterIdx | ([mserStats.EulerNumber] < -10 )&([mserStats.Area]>=thresh_Area);
+        filterIdx = filterIdx | ([mserStats.EulerNumber] <= -10 )&([mserStats.Area]>=thresh_Area);
         mserStats(filterIdx) = [];
         clear filterIdx
         bbox = vertcat(mserStats.BoundingBox);   
