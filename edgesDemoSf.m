@@ -26,7 +26,7 @@
 %% detect edge and visualize results
 
 clear;close;clc;
-do_dir='C:\Users\Administrator\Desktop\制作数据集\正样本集\data\groundTruth\';
+do_dir='C:\Users\Administrator\Desktop\N_gt\sf-0.06\';
 dir_img = dir([do_dir '*.bmp']);
 num_img = length(dir_img);
 for indexImg = 1:num_img
@@ -45,7 +45,7 @@ for indexImg = 1:num_img
     %制作segmentation
     S=im2uint16(g);
 %     S=rgb2gray(S);
-%     S=65536-S;
+    S=65536-S;
     S(find(S>=2))=15;
       
     %Canny边缘检测
@@ -54,7 +54,7 @@ for indexImg = 1:num_img
     
     
     groundTruth={struct('Segmentation',S, 'Boundaries',G)};
-    save(['C:\Users\Administrator\Desktop\制作数据集\gt_10_1\' img_value '.mat'],'groundTruth');
+    save(['C:\Users\Administrator\Desktop\N_gt\sf-0.06-mat\' img_value '.mat'],'groundTruth');
     
     
 %     figure,imshow(1-G);     % 显示分割后的图像，即梯度图像  
