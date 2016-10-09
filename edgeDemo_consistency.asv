@@ -71,8 +71,7 @@ for indexImg = 157:157
         [~,index] = sortrows([mserStats.Area].');
         thresh_Area=mserStats(index(end-2)).Area;
         filterIdx = filterIdx | ([mserStats.EulerNumber] <= -10 )&([mserStats.Area]>=thresh_Area);
-        %图形学和稳定性结合起来；存在上述情况，说明存在较严重的粘连情况，则直接跳到下一轮稳定性；
-        %统计：若8轮下来都不符合，说明粘连严重：那就不能对每个CC分析，而应对整个原图做颜色断连。
+        %图形学和稳定性结合起来；存在上述情况，说明存在较严重的粘连情况，则直接跳到下一个
         if(~isempty(find(([mserStats.EulerNumber] <= -10 )&([mserStats.Area]>=thresh_Area))))
             continue;
         end

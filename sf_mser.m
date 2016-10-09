@@ -111,10 +111,12 @@ for indexImg = 223:223
         
         regionImage = mserStats(j).Image;
         regionImage = padarray(regionImage, [1 1], 0);
+
         
         distanceImage = bwdist(~regionImage);
+     
         skeletonImage = bwmorph(regionImage, 'thin', inf);
-        
+   
         strokeWidthValues = distanceImage(skeletonImage);
         
         strokeWidthMetric = std(strokeWidthValues)/mean(strokeWidthValues);
