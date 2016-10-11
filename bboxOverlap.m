@@ -1,6 +1,6 @@
 
 
-function overlapRatio = bboxOverlap(bboxA, bboxB, ratioType)
+function overlapRatio = bboxOverlap(bboxA, bboxB)
 % Compute the overlap ratio between every row in bboxA and bboxB
 
 % left top corner
