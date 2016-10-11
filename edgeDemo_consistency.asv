@@ -146,9 +146,10 @@ for indexImg = 36:36
         
         
         %% 2016-10-11:
-        %union>0相连---> bbox高： h1/h2;重合/max(h1,h2)<15%
+        %union>0相连---> bbox高： h1/h2>0.6;重合/max(h1,h2)<15%
+        %可能要改动bboxOverlapRatio函数？
         
-        overlapRatio = bboxOverlapRatio(expandedBBoxes, expandedBBoxes);       
+        overlapRatio = bboxOverlap(expandedBBoxes, expandedBBoxes);       
         % Set the overlap ratio between a bounding box and itself to zero to
         % simplify the graph representation.
         n = size(overlapRatio,1);

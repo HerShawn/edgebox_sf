@@ -149,14 +149,14 @@ for indexImg = 36:36
         %union>0相连---> bbox高： h1/h2>0.6;重合/max(h1,h2)<15%
         %可能要改动bboxOverlapRatio函数？
         
-        overlapRatio = bboxOverlapRatio(expandedBBoxes, expandedBBoxes);       
+        overlapRatio = bboxOverlap(expandedBBoxes, expandedBBoxes);       
         % Set the overlap ratio between a bounding box and itself to zero to
         % simplify the graph representation.
         n = size(overlapRatio,1);
         overlapRatio(1:n+1:n^2) = 0;   
-        overlap_thresh=median(overlapRatio(find(overlapRatio>0)))
-        overlap_thresh=median(overlapRatio(find(overlapRatio>overlap_thresh)))
-        overlapRatio(find(overlapRatio<overlap_thresh))=0;
+%         overlap_thresh=median(overlapRatio(find(overlapRatio>0)))
+%         overlap_thresh=median(overlapRatio(find(overlapRatio>overlap_thresh)))
+%         overlapRatio(find(overlapRatio<overlap_thresh))=0;
 %          overlapRatio(find(overlapRatio==1))=0;
         % Create the graph
         gh = graph(overlapRatio);     
