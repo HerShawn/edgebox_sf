@@ -24,7 +24,7 @@ t_model.opts.nms=0;                 % set to true to enable nms
 %% Maximally Stable Text Boundary Detector
 dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\*.jpg');
 num_img = length(dir_img);
-for indexImg = 36:36
+for indexImg = 1:num_img
     
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -79,15 +79,14 @@ for indexImg = 36:36
         bbox = vertcat(mserStats.BoundingBox);
         
         %图形学判别后的结果展示
-        afterBBoxes =insertShape(skeletImg,'Rectangle',bbox,'LineWidth',1);
-        for ii=1:length(mserStats)
-            text_str{ii} = num2str(ii);
-        end
-        length(mserStats);
-        afterBBoxes = insertText(afterBBoxes,bbox(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','green');
-        %         figure(1);imshow(1-afterBBoxes);
-        save_name=[img_value '-' num2str(i) '-graphics.bmp'];
-        imwrite(1-afterBBoxes,save_name);
+%         afterBBoxes =insertShape(skeletImg,'Rectangle',bbox,'LineWidth',1);
+%         for ii=1:length(mserStats)
+%             text_str{ii} = num2str(ii);
+%         end
+%         afterBBoxes = insertText(afterBBoxes,bbox(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','green');
+%         %         figure(1);imshow(1-afterBBoxes);
+%         save_name=[img_value '-' num2str(i) '-graphics.bmp'];
+%         imwrite(1-afterBBoxes,save_name);
         
         %% 【3】文本行聚集
         
@@ -103,7 +102,7 @@ for indexImg = 36:36
             adj_index(1,adj)=length(find(adjoin(adj,:)==1));
         end
         %内含3个bbox很有可能粘连
-        adj_thresh=max(1,median(adj_index))*2;
+        adj_thresh=max(1,median(adj_index))*4;
         adjIdx=adj_index>adj_thresh;
         adjStats=mserStats(adjIdx);
         
@@ -112,9 +111,9 @@ for indexImg = 36:36
             %闭合的边缘CC才有可能粘连
             if adjStats(adj2).FilledArea/adjStats(adj2).Area>1
                 %显示该粘连边缘CC
-                %                 imshow(adjStats(adj2).Image);
-                save_name=[img_value '-' num2str(i) '-' num2str(adj2) '.bmp'];
-                imwrite(adjStats(adj2).Image,save_name);
+%                 %                 imshow(adjStats(adj2).Image);
+%                 save_name=[img_value '-' num2str(i) '-adjoin-' num2str(adj2) '.bmp'];
+%                 imwrite(adjStats(adj2).Image,save_name);
                 % 断链的核心方法
                 as=adjStats(adj2);
                 %断链的必要范围：在此范围外，没有必要断链
@@ -136,28 +135,34 @@ for indexImg = 36:36
             end
         end
         %显示断链后的skelet图
-        %         imshow(skeletImg);
-        save_name=[img_value '-' num2str(i) '-brokeAdjoin.bmp'];
-        imwrite(skeletImg,save_name);      
+%         %         imshow(skeletImg);
+%         save_name=[img_value '-' num2str(i) '-brokeAdjoin.bmp'];
+%         imwrite(skeletImg,save_name);      
         %及其再次经过图形学处理后的图
         [afterAjoin_skeletImg,afterAjoin_bbox]=classifyGraphic(skeletImg);
         %         figure(1);imshow(1-afterBBoxes);
-        save_name=[img_value '-' num2str(i) '-afterAdjoin-graphics.bmp'];
-        imwrite(1-afterAjoin_skeletImg,save_name);
+%         save_name=[img_value '-' num2str(i) '-afterAdjoin-graphics.bmp'];
+%         imwrite(1-afterAjoin_skeletImg,save_name);
         %%
         
         % 从 [x y width height] 到 [xmin ymin xmax ymax]
-        xmin = bbox(:,1);
-        ymin = bbox(:,2);
-        xmax = xmin + bbox(:,3) - 1;
-        ymax = ymin + bbox(:,4) - 1;
+        xmin = afterAjoin_bbox(:,1);
+        ymin = afterAjoin_bbox(:,2);
+        xmax = xmin + afterAjoin_bbox(:,3) - 1;
+        ymax = ymin + afterAjoin_bbox(:,4) - 1;
         % 扩展bbox,使得bbox可以聚集成文本行
-        x_expansionAmount = 0.05;
-        y_expansionAmount=0.02;
-        xmin = (1-x_expansionAmount) * xmin;
-        ymin = (1-y_expansionAmount) * ymin;
-        xmax = (1+x_expansionAmount) * xmax;
-        ymax = (1+y_expansionAmount) * ymax;
+        %         x_expansionAmount = 0.03;
+                y_expansionAmount=0.01;
+        x_expansionAmount = median(afterAjoin_bbox(:,3))/2;
+%         y_expansionAmount=median(afterAjoin_bbox(:,3))/10;
+        %         xmin = (1-x_expansionAmount) * xmin;
+                ymin = (1-y_expansionAmount) * ymin;
+        %         xmax = (1+x_expansionAmount) * xmax;
+                ymax = (1+y_expansionAmount) * ymax;
+        xmin = xmin-x_expansionAmount;
+%         ymin = ymin-y_expansionAmount;
+        xmax =xmax+x_expansionAmount;
+%         ymax = ymax+y_expansionAmount;
         % bbox再怎么扩展，也不能超过原图的边界
         xmin = max(xmin, 1);
         ymin = max(ymin, 1);
@@ -165,12 +170,15 @@ for indexImg = 36:36
         ymax = min(ymax, size(skeletImg,1));
         % 扩展后的bbox的结果展示
         expandedBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1];
-        IExpandedBBoxes = insertShape(skeletImg,'Rectangle',expandedBBoxes,'LineWidth',1);
-        IExpandedBBoxes = insertText(IExpandedBBoxes,expandedBBoxes(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','green');
-        clear text_str
-        %         figure(2);imshow(1-IExpandedBBoxes);
-        save_name=[img_value '-' num2str(i) '-expend.bmp'];
-        imwrite(1-IExpandedBBoxes,save_name);
+%         IExpandedBBoxes = insertShape(skeletImg,'Rectangle',expandedBBoxes,'LineWidth',1);
+%          for ii=1:length(expandedBBoxes)
+%             text_str{ii} = num2str(ii);
+%         end
+%         IExpandedBBoxes = insertText(IExpandedBBoxes,expandedBBoxes(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','green');
+%         clear text_str
+%         %         figure(2);imshow(1-IExpandedBBoxes);
+%         save_name=[img_value '-' num2str(i) '-expend.bmp'];
+%         imwrite(1-IExpandedBBoxes,save_name);
         % 2016-10-11: 重点！！！ 文本行分析聚集过程
         %union>0相连---> bbox高： h1/h2>0.6;重合/max(h1,h2)>0.25
         overlapRatio = bboxOverlap(expandedBBoxes, expandedBBoxes);
