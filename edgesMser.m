@@ -11,7 +11,7 @@ clc
 do_dir='D:\edgebox-contour-neumann三种检测方法的比较\';
 dir_img = dir([do_dir 'Challenge2_Test_Task12_Images\*.jpg']);
 num_img = length(dir_img);
-for indexImg = 223:223
+for indexImg = 1:1
    
    
     img_value = dir_img(indexImg).name;

@@ -24,7 +24,8 @@ t_model.opts.nms=0;                 % set to true to enable nms
 %% Maximally Stable Text Boundary Detector
 dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\*.jpg');
 num_img = length(dir_img);
-for indexImg = 36:36
+for indexImg = 157:157
+    
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
     img_name = ['C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\' img_value '.jpg'];
@@ -50,7 +51,7 @@ for indexImg = 36:36
         [L,num] = bwlabel(skeletImg,8);
         mserStats = regionprops(L, 'BoundingBox', 'Area', ...
             'FilledArea','Extent' ,'ConvexArea','Image',...
-            'EulerNumber','Solidity','Eccentricity');
+            'EulerNumber','Solidity','Eccentricity','PixelList');
         
         %% 【2】图形学判别
         bbox = vertcat(mserStats.BoundingBox);
@@ -85,14 +86,61 @@ for indexImg = 36:36
         length(mserStats);
         afterBBoxes = insertText(afterBBoxes,bbox(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','green');
 %         figure(1);imshow(1-afterBBoxes);
-        save_name=[img_value '-' num2str(i) '-graphics.bmp'];
-        imwrite(1-afterBBoxes,save_name);
+%         save_name=[img_value '-' num2str(i) '-graphics.bmp'];
+%         imwrite(1-afterBBoxes,save_name);
         
         %% 【3】文本行聚集
         
         %%  【3.1正在进行】 断开粘连 
-        %首先应该做个判断：（1）看稳定性i现在到了哪个稳定域，判断是否粘连严重，需要断开
+        %首先应该做个判断：（1）看稳定性i现在到了哪个稳定域，判断是否粘连严重，需要断开；（2）看哪个bbox需要断链：aspect,area等
+        %2016-10-11 （1）由图形学中的欧拉数配合area已经可以判断到某个稳定域进行处理了；
+        %（2）关于哪个bbox进行断链，bboxOverlapRatio(min)=1就能发现那些bbox可能发生了严重的断链问题。
+        adjoin= bboxOverlapRatio(bbox, bbox,'Min');
+        % 设bbox与它自己没有连通关系
+        n = size(adjoin,1);
+        adjoin(1:n+1:n^2) = 0;
+        adj_index=zeros(1,n);
+        for adj=1:n
+            adj_index(1,adj)=length(find(adjoin(adj,:)==1));
+        end
+        %内含3个bbox很有可能粘连
+        adj_thresh=max(1,median(adj_index))*2;
+        adjIdx=adj_index>adj_thresh;
+        adjStats=mserStats(adjIdx);
         
+        %%  2016-10-12 找adjoin点并将其断开
+        for adj2=1:length(find(adjIdx>0))
+            %闭合的边缘CC才有可能粘连
+            if adjStats(adj2).FilledArea/adjStats(adj2).Area>1
+            imshow(adjStats(adj2).Image);
+            save_name=[img_value '-' num2str(i) '-' num2str(adj2) '.bmp'];
+            imwrite(adjStats(adj2).Image,save_name);         
+            % 断链的核心方法
+            as=adjStats(adj2);
+            %断链的必要范围：在此范围外，没有必要断链
+            x_min=round(as.BoundingBox(1,1)+as.BoundingBox(1,3)*0.15);
+            x_max=round(as.BoundingBox(1,1)+as.BoundingBox(1,3)*0.85);
+            y_min=round(as.BoundingBox(1,2)+as.BoundingBox(1,4)*0.15);
+            y_max=round(as.BoundingBox(1,2)+as.BoundingBox(1,4)*0.85);
+            %遍历边缘
+            for iii=1:length(as.PixelList)
+                %边缘上的d当前像素点
+                a_x=as.PixelList(iii,1);
+                a_y=as.PixelList(iii,2);
+                
+                if ((x_min<a_x)&&(a_x<x_max))&&((y_min<a_y)&&(a_y<y_max))...
+                        &&(length(find(skeletImg(ax-1:ax+1,ay-1:ay+1)>0))>3)
+                    skeletImg(ax,ay)=0;
+                end
+                
+                
+            end
+            
+            
+            %
+            end
+        end
+        %8连通域搜索，3断：
         
         
         %%
@@ -119,9 +167,9 @@ for indexImg = 36:36
         IExpandedBBoxes = insertShape(skeletImg,'Rectangle',expandedBBoxes,'LineWidth',1);
         IExpandedBBoxes = insertText(IExpandedBBoxes,expandedBBoxes(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','green');
         clear text_str
-        figure(2);imshow(1-IExpandedBBoxes);
-        save_name=[img_value '-' num2str(i) '-expend.bmp'];
-        imwrite(1-IExpandedBBoxes,save_name);
+%         figure(2);imshow(1-IExpandedBBoxes);
+%         save_name=[img_value '-' num2str(i) '-expend.bmp'];
+%         imwrite(1-IExpandedBBoxes,save_name);
         % 2016-10-11: 重点！！！ 文本行分析聚集过程
         %union>0相连---> bbox高： h1/h2>0.6;重合/max(h1,h2)>0.25
         overlapRatio = bboxOverlap(expandedBBoxes, expandedBBoxes);
@@ -155,11 +203,11 @@ for indexImg = 36:36
         %% 最终结果
         % Show the final text detection result.
         ITextRegion = insertShape(skeletImg, 'Rectangle', textBBoxes,'LineWidth',1);
-        figure(3);imshow(1-ITextRegion);
+%         figure(3);imshow(1-ITextRegion);
         %保存结果图像
         %         save_name=[img_value '-' num2str(i) '-' num2str(length(mserStats)) '.bmp'];
-        save_name=[img_value '-' num2str(i) '-merge.bmp'];
-        imwrite(1-ITextRegion,save_name);
+%         save_name=[img_value '-' num2str(i) '-merge.bmp'];
+%         imwrite(1-ITextRegion,save_name);
     end
     
 end
