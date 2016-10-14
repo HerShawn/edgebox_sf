@@ -143,7 +143,9 @@ for indexImg = 1:num_img
         %         figure(1);imshow(1-afterBBoxes);
 %         save_name=[img_value '-' num2str(i) '-afterAdjoin-graphics.bmp'];
 %         imwrite(1-afterAjoin_skeletImg,save_name);
-        %%
+
+
+        %% 文本行扩张、聚集    
         
         % 从 [x y width height] 到 [xmin ymin xmax ymax]
         xmin = afterAjoin_bbox(:,1);
