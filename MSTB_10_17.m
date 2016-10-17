@@ -105,15 +105,15 @@ for indexImg = 1:num_img
         bbox = vertcat(edgeStats.BoundingBox);
         
         %图形学判别后的结果展示
-        afterMorphology =insertShape(skeletImg,'Rectangle',bbox,'LineWidth',1);
-        afterMorphologyEdgeNum=length(edgeStats);
-        for ii=1:afterMorphologyEdgeNum
-            text_str{ii} = num2str(ii);
-        end
-        afterMorphology = insertText(afterMorphology,bbox(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','green');
-        clear text_str
-        save_name=[img_value '-' num2str(i) '-afterMorphology-' num2str(afterMorphologyEdgeNum) '.bmp'];
-        imwrite(1-afterMorphology,save_name);
+        %         afterMorphology =insertShape(skeletImg,'Rectangle',bbox,'LineWidth',1);
+        %         afterMorphologyEdgeNum=length(edgeStats);
+        %         for ii=1:afterMorphologyEdgeNum
+        %             text_str{ii} = num2str(ii);
+        %         end
+        %         afterMorphology = insertText(afterMorphology,bbox(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','green');
+        %         clear text_str
+        %         save_name=[img_value '-' num2str(i) '-afterMorphology-' num2str(afterMorphologyEdgeNum) '.bmp'];
+        %         imwrite(1-afterMorphology,save_name);
         
         %2016-10-16【去掉一个像素的】
         filter_index=[];
@@ -174,7 +174,25 @@ for indexImg = 1:num_img
         edgeStats(filterIdx) = [];
         clear filterIdx
         bbox = vertcat(edgeStats.BoundingBox);
+            
         
+        %2016-10-17 在大于4个median的bbox中产生4个以上的粘连，就continue，直到break;
+        adjoin= bboxOverlapRatio(bbox, bbox);
+        n = size(adjoin,1);
+        adjoin(1:n+1:n^2) = 0;
+        %计算bbox相互间粘连数目
+        adj_index=zeros(1,n);
+        for adj=1:n
+            adj_index(1,adj)=length(find(adjoin(adj,:)>0));
+        end
+        w = bbox(:,3);
+        h = bbox(:,4);
+        bboxArea=w.*h;
+        if(~isempty(find(bboxArea>4*median(bboxArea))))
+            if(~isempty(find(adj_index>3)))
+                continue
+            end
+        end
         
         %去掉【一个像素】后的结果展示
         afterMorphology2 =insertShape(skeletImg,'Rectangle',bbox,'LineWidth',1);
@@ -187,6 +205,9 @@ for indexImg = 1:num_img
         save_name=[img_value '-' num2str(i) '-afterMorphology2-' num2str(afterMorphologyEdgeNum) '.bmp'];
         imwrite(1-afterMorphology2,save_name);
         
+        
+         
+       
         
         
         
@@ -255,7 +276,7 @@ for indexImg = 1:num_img
         %
         %        %gmse=256-rgb2gray(sfMask(g,skeletImg));
         
-%         break;
+        break;
         
     end
 end

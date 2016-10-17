@@ -24,7 +24,7 @@ t_model.opts.nms=0;                 % set to true to enable nms
 %% Maximally Stable Text Boundary Detector
 dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\*.jpg');
 num_img = length(dir_img);
-for indexImg = 25:25
+for indexImg = 1:num_img
     
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -117,27 +117,38 @@ for indexImg = 25:25
         
         %2016-10-16【去掉一个像素的】
         filter_index=[];
-        for ii=20:length(edgeStats)
+        for ii=1:length(edgeStats)
             statsImg=edgeStats(ii).Image;
+            [h,w]=size(statsImg);
             
             %纵向
             row1=find(sum(statsImg')==1);
+            filter_index1=[];
+            if length(row1)/h>0.8
             col1=zeros(1,length(row1));
             for iii=1:length(row1)
                 [~,col]=find(statsImg(row1(iii),:)~=0);
                 col1(1,iii)=col;
             end
             filter_index1=[col1+floor( edgeStats(ii).BoundingBox(1,1));row1+floor( edgeStats(ii).BoundingBox(1,2))];
+            end
             
             %横向
             col2=find(sum(statsImg)==1);
+            filter_index2=[];
+            if length(col2)/w>0.8
             row2=zeros(1,length(col2));
             for iii=1:length(col2)
                 [row,~]=find(statsImg(:,col2(iii))~=0);
                 row2(1,iii)=row;
             end
-            filter_index2=[col2+floor( edgeStats(ii).BoundingBox(1,1));row2+floor( edgeStats(ii).BoundingBox(1,2))]
+            filter_index2=[col2+floor( edgeStats(ii).BoundingBox(1,1));row2+floor( edgeStats(ii).BoundingBox(1,2))];
+            end
             filter_index=[filter_index filter_index1 filter_index2];
+        end
+        
+        for ii=1:length(filter_index)
+            skeletImg(filter_index(2,ii),filter_index(1,ii))=0;
         end
         
         % 连通区域的属性
@@ -147,6 +158,35 @@ for indexImg = 25:25
             'EulerNumber','Solidity','Eccentricity','PixelList');  
         %在当前阈值分割下的结果展示
         bbox = vertcat(edgeStats.BoundingBox);
+        
+        
+        %滤掉太小面积的
+        filterIdx = [edgeStats.FilledArea] < 50 ;
+        
+        %宽高比
+        w = bbox(:,3);
+        h = bbox(:,4);
+        aspectRatio = w./h;
+        filterIdx = filterIdx | aspectRatio' > 8 ;
+        filterIdx = filterIdx |  aspectRatio' <1/7 ;
+        
+        %不符合形态学的都滤除掉
+        edgeStats(filterIdx) = [];
+        clear filterIdx
+        bbox = vertcat(edgeStats.BoundingBox);
+        
+        %2016-10-17 在大于5个median的bbox中产生4个以上的粘连，就continue，直到break;
+        w = bbox(:,3);
+        h = bbox(:,4);
+        bboxArea=w.*h;
+        if(~isempty(find((bboxArea>5*median(bboxArea))))
+%         if bboxArea>5*median(bboxArea)
+            
+        end
+        
+        
+        
+        
         %去掉【一个像素】后的结果展示
         afterMorphology2 =insertShape(skeletImg,'Rectangle',bbox,'LineWidth',1);
         afterMorphologyEdgeNum=length(edgeStats);
@@ -226,6 +266,7 @@ for indexImg = 25:25
         %
         %        %gmse=256-rgb2gray(sfMask(g,skeletImg));
         
+%         break;
         
     end
 end
