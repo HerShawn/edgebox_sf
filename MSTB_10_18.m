@@ -24,7 +24,7 @@ t_model.opts.nms=0;                 % set to true to enable nms
 %% Maximally Stable Edge Text Detector 最稳定边缘文字检测子
 dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\*.jpg');
 num_img = length(dir_img);
-for indexImg = 95:95
+for indexImg = 1:num_img
     
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -162,63 +162,102 @@ for indexImg = 95:95
         
         
         %去掉【一个像素】后的结果展示
-        afterMorphology2 =insertShape(skeletImg,'Rectangle',selectedBbox,'LineWidth',1);
-        afterMorphologyEdgeNum=length(selectedBbox);
-        for ii=1:afterMorphologyEdgeNum
-            text_str{ii} = num2str(ii);
-        end
-        afterMorphology2 = insertText(afterMorphology2,selectedBbox(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','green');
-        clear text_str
-        save_name=[img_value '-' num2str(i) '-afterMorphology2-' num2str(afterMorphologyEdgeNum) '.bmp'];
-        imwrite(1-afterMorphology2,save_name);
+        %         afterMorphology2 =insertShape(skeletImg,'Rectangle',selectedBbox,'LineWidth',1);
+        %         afterMorphologyEdgeNum=size(selectedBbox,1);
+        %         for ii=1:afterMorphologyEdgeNum
+        %             text_str{ii} = num2str(ii);
+        %         end
+        %         afterMorphology2 = insertText(afterMorphology2,selectedBbox(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','green');
+        %         clear text_str
+        %         save_name=[img_value '-' num2str(i) '-afterMorphology2-' num2str(afterMorphologyEdgeNum) '.bmp'];
+        %         imwrite(1-afterMorphology2,save_name);
          
         
-        %% 分类器： MSER 属性 判断文字/非文字
+        %% 文本行分析 一行的高 排序 离群 粘连点 
         
-        for ii=1:length(selectedBbox)
-            
-            gBbox=g(selectedBbox(ii,2):selectedBbox(ii,2)+selectedBbox(ii,4),selectedBbox(ii,1):selectedBbox(ii,1)+selectedBbox(ii,3),:);
-            gI = rgb2gray(gBbox);
-            maxArea=selectedBbox(ii,3)*selectedBbox(ii,4);
-            minArea=maxArea/10;
-            [mserRegions, mserConnComp] = detectMSERFeatures(gI, ...
-                'RegionAreaRange',[100 10000],'ThresholdDelta',1);           
-            figure
-            imshow(gI)
-            hold on
-            plot(mserRegions, 'showPixelList', true,'showEllipses',false)
-            title('MSER regions')
-            hold off
-            
-            
-            mserStats = regionprops(mserConnComp, 'BoundingBox', 'Eccentricity', ...
-                'Solidity', 'Extent', 'Euler', 'Image');
-            bbox = vertcat(mserStats.BoundingBox);
-            w = bbox(:,3);
-            h = bbox(:,4);
-            aspectRatio = w./h;
-            
-            % Threshold the data to determine which regions to remove. These thresholds
-            % may need to be tuned for other images.
-            filterIdx = aspectRatio' > 7;
-            filterIdx = filterIdx | [mserStats.Eccentricity] > .995 ;
-            filterIdx = filterIdx | [mserStats.Solidity] < .3;
-            filterIdx = filterIdx | [mserStats.Extent] < 0.2 | [mserStats.Extent] > 0.9;
-            filterIdx = filterIdx | [mserStats.EulerNumber] < -4;
-            
-            % Remove regions
-            mserStats(filterIdx) = [];
-            mserRegions(filterIdx) = [];
-            clear filterIdx
-            
-            % Show remaining regions
-            figure
-            imshow(I)
-            hold on
-            plot(mserRegions, 'showPixelList', true,'showEllipses',false)
-            title('After Removing Non-Text Regions Based On Geometric Properties')
-            hold off
-        end
+        % 从 [x y width height] 到 [xmin ymin xmax ymax]
+        xmin = selectedBbox(:,1);
+        ymin = selectedBbox(:,2);
+        xmax = xmin + selectedBbox(:,3) - 1;
+        ymax = ymin + selectedBbox(:,4) - 1;
+        % 扩展bbox,使得bbox可以聚集成文本行
+        %         x_expansionAmount = 0.03;
+        y_expansionAmount=0.01;
+        x_expansionAmount = median(selectedBbox(:,3))/2;
+        %         y_expansionAmount=median(afterAjoin_bbox(:,3))/10;
+        %         xmin = (1-x_expansionAmount) * xmin;
+        ymin = (1-y_expansionAmount) * ymin;
+        %         xmax = (1+x_expansionAmount) * xmax;
+        ymax = (1+y_expansionAmount) * ymax;
+        xmin = xmin-x_expansionAmount;
+        %         ymin = ymin-y_expansionAmount;
+        xmax =xmax+x_expansionAmount;
+        %         ymax = ymax+y_expansionAmount;
+        % bbox再怎么扩展，也不能超过原图的边界
+        xmin = max(xmin, 1);
+        ymin = max(ymin, 1);
+        xmax = min(xmax, size(skeletImg,2));
+        ymax = min(ymax, size(skeletImg,1));
+        % 扩展后的bbox的结果展示
+        expandedBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1];
+        %         IExpandedBBoxes = insertShape(skeletImg,'Rectangle',expandedBBoxes,'LineWidth',1);
+        %          for ii=1:length(expandedBBoxes)
+        %             text_str{ii} = num2str(ii);
+        %         end
+        %         IExpandedBBoxes = insertText(IExpandedBBoxes,expandedBBoxes(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','green');
+        %         clear text_str
+        %         %         figure(2);imshow(1-IExpandedBBoxes);
+        %         save_name=[img_value '-' num2str(i) '-expend.bmp'];
+        %         imwrite(1-IExpandedBBoxes,save_name);
+        % 2016-10-11: 重点！！！ 文本行分析聚集过程
+        %union>0相连---> bbox高： h1/h2>0.6;重合/max(h1,h2)>0.25
+        overlapRatio = bboxOverlap(expandedBBoxes, expandedBBoxes);
+        % 设bbox与它自己没有连通关系
+        n = size(overlapRatio,1);
+        overlapRatio(1:n+1:n^2) = 0;
+        % Create the graph
+        gh = graph(overlapRatio);
+        % Find the connected text regions within the graph
+        componentIndices = conncomp(gh);
+        
+        %% 这个将cc连成文本行可能不做
+        %  merge multiple neighboring bounding boxes into a single bounding box by computing the
+        % minimum and maximum of the individual bounding boxes that make up each connected component.
+        % Merge the boxes based on the minimum and maximum dimensions.
+        xmin = accumarray(componentIndices', xmin, [], @min);
+        ymin = accumarray(componentIndices', ymin, [], @min);
+        xmax = accumarray(componentIndices', xmax, [], @max);
+        ymax = accumarray(componentIndices', ymax, [], @max);
+        % Compose the merged bounding boxes using the [x y width height] format.
+        textBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1];
+        %%
+        
+        %         % suppress false text detections by removing bounding boxes made up of just one text region.
+        %         numRegionsInGroup = histcounts(componentIndices);
+        %         %% 只有一个region的连通区域组要进入分类器阶段 【待做】
+        %         textBBoxes(numRegionsInGroup == 1, :) = [];
+        
+        
+        
+        %% 最终结果
+        % Show the final text detection result.
+        ITextRegion = insertShape(skeletImg, 'Rectangle', textBBoxes,'LineWidth',1);
+        %         figure(3);imshow(1-ITextRegion);
+        %保存结果图像
+        %         save_name=[img_value '-' num2str(i) '-' num2str(length(mserStats)) '.bmp'];
+        save_name=[img_value '-' num2str(i) '-merge.bmp'];
+        imwrite(1-ITextRegion,save_name);
+        
+        
+        %% 分类器： MSER 属性 判断文字/非文字
+        %2016-10-18：准备用字符识别CNN做分类器
+        
+%         for ii=1:length(selectedBbox)
+%             
+%             gBbox=g(selectedBbox(ii,2):selectedBbox(ii,2)+selectedBbox(ii,4)-1,selectedBbox(ii,1):selectedBbox(ii,1)+selectedBbox(ii,3),:)-1;
+%             
+%            
+%         end
         
         
         

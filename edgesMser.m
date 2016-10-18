@@ -8,15 +8,15 @@
 close all
 clear
 clc
-do_dir='D:\edgebox-contour-neumann三种检测方法的比较\';
-dir_img = dir([do_dir 'Challenge2_Test_Task12_Images\*.jpg']);
+do_dir='C:\Users\Administrator\Desktop\制作数据集\icdar2003 train\SceneTrialTrain\';
+dir_img = dir([do_dir 'lfsosa_12.08.2002\*.jpg']);
 num_img = length(dir_img);
-for indexImg = 1:1
+for indexImg = 1:num_img
    
    
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
-    img_name = [do_dir 'Challenge2_Test_Task12_Images\' img_value '.jpg'];
+    img_name = [do_dir 'lfsosa_12.08.2002\' img_value '.jpg'];
     
     %% Step 1: Detect Candidate Text Regions Using MSER
     colorImage_temp = imread(img_name);
