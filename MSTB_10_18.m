@@ -229,7 +229,9 @@ for indexImg = 1:num_img
         xmax = accumarray(componentIndices', xmax, [], @max);
         ymax = accumarray(componentIndices', ymax, [], @max);
         % Compose the merged bounding boxes using the [x y width height] format.
-        textBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1];
+        xmin( find(xmin~=1))=xmin( find(xmin~=1))+x_expansionAmount;
+        xmax(find(xmax==size(skeletImg,2)))=xmax(find(xmax==size(skeletImg,2)))+x_expansionAmount;
+        textBBoxes = [xmin ymin min(xmax-xmin+1-x_expansionAmount,size(skeletImg,2)-xmin) ymax-ymin+1];
         %%
         
         %         % suppress false text detections by removing bounding boxes made up of just one text region.
