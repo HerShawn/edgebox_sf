@@ -24,7 +24,7 @@ t_model.opts.nms=0;                 % set to true to enable nms
 %% Maximally Stable Edge Text Detector 最稳定边缘文字检测子
 dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\*.jpg');
 num_img = length(dir_img);
-for indexImg = 214:214
+for indexImg = 197:197
     
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -217,30 +217,12 @@ for indexImg = 214:214
         
         
        %% 分类器： MSER 属性 判断文字/非文字
-        %2016-10-19：plot
+        %CNN
+        addpath(genpath('/detectorDemo'));
         for ii=1:size(textBBoxes,1)     
             %先选择SF
-            gBbox=skeletImg(textBBoxes(ii,2):textBBoxes(ii,2)+textBBoxes(ii,4)-1,textBBoxes(ii,1):textBBoxes(ii,1)+textBBoxes(ii,3),:);
-            fgb=figure(ii);
-            subplot(3,1,1);
-            imshow(gBbox);
-            
-            gBx=sum(gBbox);
-            subplot(3,1,2);
-            bar(gBx);
-            
-            gBy=sum(gBbox');
-            subplot(3,1,3);
-            bar(gBy);
-            
-            h=size(gBbox,1);
-            w=size(gBbox,2);
-            aspectBbox=w/h;
-            save_gBname=[img_value '-' num2str(ii) '-' num2str(aspectBbox) '.bmp'];
-            saveas(fgb,save_gBname);           
-            %备选 skelet
-            %gBbox=skeletImg(textBBoxes(ii,2):textBBoxes(ii,2)+textBBoxes(ii,4)-1,textBBoxes(ii,1):textBBoxes(ii,1)+textBBoxes(ii,3),:);           
-            close all          
+            gBbox=g(textBBoxes(ii,2):textBBoxes(ii,2)+textBBoxes(ii,4)-1,textBBoxes(ii,1):textBBoxes(ii,1)+textBBoxes(ii,3),:);
+            runDetectorDemo(gBbox);
         end
         
 

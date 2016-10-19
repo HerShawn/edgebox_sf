@@ -6,6 +6,7 @@
 /models/*
 /BSR/*
 /detectorDemo/*
+/finetune/*
 
 *.jpg
 *.txt
