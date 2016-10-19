@@ -24,7 +24,7 @@ t_model.opts.nms=0;                 % set to true to enable nms
 %% Maximally Stable Edge Text Detector 最稳定边缘文字检测子
 dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\*.jpg');
 num_img = length(dir_img);
-for indexImg = 198:198
+for indexImg = 211:211
     
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -235,24 +235,10 @@ for indexImg = 198:198
             plot(gBy);
             
             save_gBname=[img_value '-' num2str(ii) '-sf.bmp'];
-            saveas(fgb,save_gBname);
-            
+            saveas(fgb,save_gBname);           
             %skelet
-            gBbox=skeletImg(textBBoxes(ii,2):textBBoxes(ii,2)+textBBoxes(ii,4)-1,textBBoxes(ii,1):textBBoxes(ii,1)+textBBoxes(ii,3),:);
-            fgb=figure(ii+1)
-            subplot(1,3,1);
-            imshow(gBbox);
-            
-            gBx=sum(gBbox);
-            subplot(1,3,2);
-            plot(gBx);
-            
-            gBy=sum(gBbox');
-            subplot(1,3,3);
-            plot(gBy);
-            
-            save_gBname=[img_value '-' num2str(ii) '-skelet.bmp'];
-            saveas(fgb,save_gBname);
+            %             gBbox=skeletImg(textBBoxes(ii,2):textBBoxes(ii,2)+textBBoxes(ii,4)-1,textBBoxes(ii,1):textBBoxes(ii,1)+textBBoxes(ii,3),:);
+
             
             close all
             

@@ -5,6 +5,7 @@
 /piotr_toolbox/*
 /models/*
 /BSR/*
+/detectorDemo/*
 
 *.jpg
 *.txt
