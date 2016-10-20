@@ -24,7 +24,7 @@ t_model.opts.nms=0;                 % set to true to enable nms
 %% Maximally Stable Edge Text Detector 最稳定边缘文字检测子
 dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\*.jpg');
 num_img = length(dir_img);
-for indexImg = 1:num_img
+for indexImg = 114:114
     
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -33,12 +33,12 @@ for indexImg = 1:num_img
     E1=edgesDetect(g,t_model);
     E_tmp=E1;
     
-    %自适应的设置从第几个阈值分割起始
-    E_thresh=median(median(E1(find(E1>0))))
-    begin_index= round(100*median(median(E1(find(E1>E_thresh)))))
+%     %自适应的设置从第几个阈值分割起始
+%     E_thresh=median(median(E1(find(E1>0))))
+%     begin_index= round(100*median(median(E1(find(E1>E_thresh)))))
     %% 【1】边缘稳定稳定性 
     %     for i=begin_index:1:20
-    for i=begin_index:1:20
+    for i=1:1:30
         E1=E_tmp;
         %自适应阈值分割
         thresh=median(median(E1(find(E1>(i/100)))));
@@ -138,23 +138,23 @@ for indexImg = 1:num_img
         bbox = vertcat(edgeStats.BoundingBox);
             
         
-        %2016-10-17 在大于4个median的bbox中产生4个以上的粘连，就continue，直到break;
-        adjoin= bboxOverlapRatio(bbox, bbox);
-        n = size(adjoin,1);
-        adjoin(1:n+1:n^2) = 0;
-        %计算bbox相互间粘连数目
-        adj_index=zeros(1,n);
-        for adj=1:n
-            adj_index(1,adj)=length(find(adjoin(adj,:)>0));
-        end
+        %         %2016-10-17 在大于4个median的bbox中产生4个以上的粘连，就continue，直到break;
+        %         adjoin= bboxOverlapRatio(bbox, bbox);
+        %         n = size(adjoin,1);
+        %         adjoin(1:n+1:n^2) = 0;
+        %         %计算bbox相互间粘连数目
+        %         adj_index=zeros(1,n);
+        %         for adj=1:n
+        %             adj_index(1,adj)=length(find(adjoin(adj,:)>0));
+        %         end
         w = bbox(:,3);
         h = bbox(:,4);
         bboxArea=w.*h;
-        if(~isempty(find(bboxArea>4*median(bboxArea))))
-            if(~isempty(find(adj_index>3)))
-                continue
-            end
-        end
+        %         if(~isempty(find(bboxArea>4*median(bboxArea))))
+        %             if(~isempty(find(adj_index>3)))
+        %                 continue
+        %             end
+        %         end
         
         %先将完全被包含的抑制掉
         thresh=0.9;
@@ -214,23 +214,20 @@ for indexImg = 1:num_img
         imwrite(1-afterTextLine,save_name);
         
 
-        %2016-10-20 MSER evaluation
-        MSE_eval()
-        
        %% 分类器： MSER 属性 判断文字/非文字
         %CNN
-        addpath(genpath('/detectorDemo'));
-        for ii=1:size(textBBoxes,1)     
-            %先选择SF
-            gBbox=g(textBBoxes(ii,2):textBBoxes(ii,2)+textBBoxes(ii,4)-1,textBBoxes(ii,1):textBBoxes(ii,1)+textBBoxes(ii,3),:);
-            save_gBname=[img_value '-' num2str(ii)  '.bmp'];
-            runDetectorDemo(gBbox,save_gBname);
-        end
+%         addpath(genpath('/detectorDemo'));
+%         for ii=1:size(textBBoxes,1)     
+%             %先选择SF
+%             gBbox=g(textBBoxes(ii,2):textBBoxes(ii,2)+textBBoxes(ii,4)-1,textBBoxes(ii,1):textBBoxes(ii,1)+textBBoxes(ii,3),:);
+%             save_gBname=[img_value '-' num2str(ii)  '.bmp'];
+%             runDetectorDemo(gBbox,save_gBname);
+%         end
         
 
         
         % 最稳定文字边缘：在某个阈值分割下跳出；当前阈值分割下，文字边缘最显著
-        break;        
+%         break;        
     end
 end
 
