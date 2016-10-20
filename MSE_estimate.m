@@ -24,7 +24,7 @@ t_model.opts.nms=0;                 % set to true to enable nms
 %% Maximally Stable Edge Text Detector 最稳定边缘文字检测子
 dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\*.jpg');
 num_img = length(dir_img);
-for indexImg = 211:211
+for indexImg = 1:num_img
     
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -163,88 +163,51 @@ for indexImg = 211:211
         
         
         
-       %% 文本行分析 一行的高 排序 离群 粘连点 
-        
-        % 从 [x y width height] 到 [xmin ymin xmax ymax]
-        xmin = selectedBbox(:,1);
-        ymin = selectedBbox(:,2);
-        xmax = xmin + selectedBbox(:,3) - 1;
-        ymax = ymin + selectedBbox(:,4) - 1;
-        % 扩展bbox,使得bbox可以聚集成文本行
-        y_expansionAmount=0.01;
-        x_expansionAmount = median(selectedBbox(:,3))/2;
-        ymin = (1-y_expansionAmount) * ymin;
-        ymax = (1+y_expansionAmount) * ymax;
-        xmin = xmin-x_expansionAmount;
-        xmax =xmax+x_expansionAmount;
-        % bbox再怎么扩展，也不能超过原图的边界
-        xmin = max(xmin, 1);
-        ymin = max(ymin, 1);
-        xmax = min(xmax, size(skeletImg,2));
-        ymax = min(ymax, size(skeletImg,1));
-        % 扩展后的bbox的结果展示
-        expandedBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1];
-        overlapRatio = bboxOverlap(expandedBBoxes, expandedBBoxes);
-        % 设bbox与它自己没有连通关系
-        n = size(overlapRatio,1);
-        overlapRatio(1:n+1:n^2) = 0;
-        % Create the graph
-        gh = graph(overlapRatio);
-        % Find the connected text regions within the graph
-        componentIndices = conncomp(gh);        
-        % Merge the boxes based on the minimum and maximum dimensions.
-        xmin = accumarray(componentIndices', xmin, [], @min);
-        ymin = accumarray(componentIndices', ymin, [], @min);
-        xmax = accumarray(componentIndices', xmax, [], @max);
-        ymax = accumarray(componentIndices', ymax, [], @max);
-        % Compose the merged bounding boxes using the [x y width height] format.
-        xmin( find(xmin~=1))=xmin( find(xmin~=1))+x_expansionAmount;
-        xmax(find(xmax==size(skeletImg,2)))=xmax(find(xmax==size(skeletImg,2)))+x_expansionAmount;
-        textBBoxes = [xmin ymin min(xmax-xmin+1-x_expansionAmount,size(skeletImg,2)-xmin) ymax-ymin+1];
+%        %% 文本行分析 一行的高 排序 离群 粘连点 
+%         
+%         % 从 [x y width height] 到 [xmin ymin xmax ymax]
+%         xmin = selectedBbox(:,1);
+%         ymin = selectedBbox(:,2);
+%         xmax = xmin + selectedBbox(:,3) - 1;
+%         ymax = ymin + selectedBbox(:,4) - 1;
+%         % 扩展bbox,使得bbox可以聚集成文本行
+%         y_expansionAmount=0.01;
+%         x_expansionAmount = median(selectedBbox(:,3))/2;
+%         ymin = (1-y_expansionAmount) * ymin;
+%         ymax = (1+y_expansionAmount) * ymax;
+%         xmin = xmin-x_expansionAmount;
+%         xmax =xmax+x_expansionAmount;
+%         % bbox再怎么扩展，也不能超过原图的边界
+%         xmin = max(xmin, 1);
+%         ymin = max(ymin, 1);
+%         xmax = min(xmax, size(skeletImg,2));
+%         ymax = min(ymax, size(skeletImg,1));
+%         % 扩展后的bbox的结果展示
+%         expandedBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1];
+%         overlapRatio = bboxOverlap(expandedBBoxes, expandedBBoxes);
+%         % 设bbox与它自己没有连通关系
+%         n = size(overlapRatio,1);
+%         overlapRatio(1:n+1:n^2) = 0;
+%         % Create the graph
+%         gh = graph(overlapRatio);
+%         % Find the connected text regions within the graph
+%         componentIndices = conncomp(gh);        
+%         % Merge the boxes based on the minimum and maximum dimensions.
+%         xmin = accumarray(componentIndices', xmin, [], @min);
+%         ymin = accumarray(componentIndices', ymin, [], @min);
+%         xmax = accumarray(componentIndices', xmax, [], @max);
+%         ymax = accumarray(componentIndices', ymax, [], @max);
+%         % Compose the merged bounding boxes using the [x y width height] format.
+%         xmin( find(xmin~=1))=xmin( find(xmin~=1))+x_expansionAmount;
+%         xmax(find(xmax==size(skeletImg,2)))=xmax(find(xmax==size(skeletImg,2)))+x_expansionAmount;
+%         textBBoxes = [xmin ymin min(xmax-xmin+1-x_expansionAmount,size(skeletImg,2)-xmin) ymax-ymin+1];
        
-        % 文本行聚类结果
-        afterTextLine = insertShape(skeletImg, 'Rectangle', textBBoxes,'LineWidth',1);
-        afterTextLineNum=size(textBBoxes,1);
-        for ii=1:afterTextLineNum
-            text_str{ii} = num2str(ii);
-        end
-        afterTextLine = insertText(afterTextLine,textBBoxes(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','green');
-        clear text_str
-        save_name=[img_value '-' num2str(i) '-merge-' num2str(afterTextLineNum) '.bmp'];
-        imwrite(1-afterTextLine,save_name);
+         target_txt_name=[ 'C:\Users\Administrator\Desktop\制作数据集\estimate2\' img_value '-es.txt'];
+         dlmwrite(target_txt_name, selectedBbox);
         
 
+       
         
-        
-       %% 分类器： MSER 属性 判断文字/非文字
-        %2016-10-19：plot
-        for ii=1:length(textBBoxes)
-            
-            %SF
-            gBbox=E_tmp(textBBoxes(ii,2):textBBoxes(ii,2)+textBBoxes(ii,4)-1,textBBoxes(ii,1):textBBoxes(ii,1)+textBBoxes(ii,3),:);
-            fgb=figure(ii)
-            subplot(1,3,1);
-            imshow(gBbox);
-            
-            gBx=sum(gBbox);
-            subplot(1,3,2);
-            plot(gBx);
-            
-            gBy=sum(gBbox');
-            subplot(1,3,3);
-            plot(gBy);
-            
-            save_gBname=[img_value '-' num2str(ii) '-sf.bmp'];
-            saveas(fgb,save_gBname);           
-            %skelet
-            %             gBbox=skeletImg(textBBoxes(ii,2):textBBoxes(ii,2)+textBBoxes(ii,4)-1,textBBoxes(ii,1):textBBoxes(ii,1)+textBBoxes(ii,3),:);
-
-            
-            close all
-            
-        end
-        
-
         % 最稳定文字边缘：在某个阈值分割下跳出；当前阈值分割下，文字边缘最显著
         break;        
     end

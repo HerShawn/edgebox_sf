@@ -24,7 +24,7 @@ t_model.opts.nms=0;                 % set to true to enable nms
 %% Maximally Stable Edge Text Detector 最稳定边缘文字检测子
 dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\*.jpg');
 num_img = length(dir_img);
-for indexImg = 197:197
+for indexImg = 1:num_img
     
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -214,7 +214,8 @@ for indexImg = 197:197
         imwrite(1-afterTextLine,save_name);
         
 
-        
+        %2016-10-20 MSER evaluation
+        MSE_eval()
         
        %% 分类器： MSER 属性 判断文字/非文字
         %CNN
@@ -222,10 +223,12 @@ for indexImg = 197:197
         for ii=1:size(textBBoxes,1)     
             %先选择SF
             gBbox=g(textBBoxes(ii,2):textBBoxes(ii,2)+textBBoxes(ii,4)-1,textBBoxes(ii,1):textBBoxes(ii,1)+textBBoxes(ii,3),:);
-            runDetectorDemo(gBbox);
+            save_gBname=[img_value '-' num2str(ii)  '.bmp'];
+            runDetectorDemo(gBbox,save_gBname);
         end
         
 
+        
         % 最稳定文字边缘：在某个阈值分割下跳出；当前阈值分割下，文字边缘最显著
         break;        
     end
