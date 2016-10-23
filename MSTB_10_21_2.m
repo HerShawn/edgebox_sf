@@ -1,10 +1,12 @@
 
+
 %% 针对文字的sf模型
 close all
 clear
 clc
 addpath('piotr_toolbox');
 addpath(genpath(pwd));
+run model_release/matconvnet/matlab/vl_setupnn.m
 % set opts for training (see edgesTrain.m)
 opts=edgesTrain();                % default options (good settings)
 opts.modelDir='models/';          % model will be in models/forest
@@ -45,14 +47,14 @@ for indexImg = 1:num_img
         mseBegin=15;
         mseEnd=25;
     else
-        mseBegin=15;
-        mseEnd=25;
+        mseBegin=E_thresh-5;
+        mseEnd=E_thresh+5;
     end
     
     
     %% 【1】边缘稳定稳定性 
     %     for i=begin_index:1:20
-    for i=begin_index:1:20
+    for i=mseBegin:1:mseEnd
         E1=E_tmp;
         %自适应阈值分割
         thresh=median(median(E1(find(E1>(i/100)))));
@@ -87,6 +89,11 @@ for indexImg = 1:num_img
         filterIdx = filterIdx |  aspectRatio' <1/7 ;
         
         %不符合形态学的都滤除掉
+        
+        if  size(edgeStats,1)==length(find(filterIdx))
+            continue
+        end
+        
         edgeStats(filterIdx) = [];
         clear filterIdx
         
@@ -147,6 +154,10 @@ for indexImg = 1:num_img
         filterIdx = filterIdx | aspectRatio' > 8 ;
         filterIdx = filterIdx |  aspectRatio' <1/7 ;      
         %不符合形态学的都滤除掉
+        
+        if  size(edgeStats,1)==length(find(filterIdx))
+            continue
+        end
         edgeStats(filterIdx) = [];
         clear filterIdx
         bbox = vertcat(edgeStats.BoundingBox);
@@ -160,103 +171,29 @@ for indexImg = 1:num_img
         clear text_str
         save_name=[img_value '-' num2str(i) '-MSE-' num2str(ii) '.bmp'];
         imwrite(1-MSE,save_name);
-        
-        
-        
-        
-        
-        %         %2016-10-17 在大于4个median的bbox中产生4个以上的粘连，就continue，直到break;
-        %         adjoin= bboxOverlapRatio(bbox, bbox);
-        %         n = size(adjoin,1);
-        %         adjoin(1:n+1:n^2) = 0;
-        %         %计算bbox相互间粘连数目
-        %         adj_index=zeros(1,n);
-        %         for adj=1:n
-        %             adj_index(1,adj)=length(find(adjoin(adj,:)>0));
-        %         end
-        %         w = bbox(:,3);
-        %         h = bbox(:,4);
-        %         bboxArea=w.*h;
-        %         if(~isempty(find(bboxArea>4*median(bboxArea))))
-        %             if(~isempty(find(adj_index>3)))
-        %                 continue
-        %             end
-        %         end
-        
-        %         %先将完全被包含的抑制掉
-        %         thresh=0.9;
-        %         [selectedBbox,~] = selectStrongestBbox(bbox,bboxArea,'RatioType','Min','OverlapThreshold',thresh);
-        
-        
-        
-        
-        %        %% 文本行分析 一行的高 排序 离群 粘连点
-        %
-        %         % 从 [x y width height] 到 [xmin ymin xmax ymax]
-        %         xmin = selectedBbox(:,1);
-        %         ymin = selectedBbox(:,2);
-        %         xmax = xmin + selectedBbox(:,3) - 1;
-        %         ymax = ymin + selectedBbox(:,4) - 1;
-        %         % 扩展bbox,使得bbox可以聚集成文本行
-        %         y_expansionAmount=0.01;
-        %         x_expansionAmount = median(selectedBbox(:,3))/2;
-        %         ymin = (1-y_expansionAmount) * ymin;
-        %         ymax = (1+y_expansionAmount) * ymax;
-        %         xmin = xmin-x_expansionAmount;
-        %         xmax =xmax+x_expansionAmount;
-        %         % bbox再怎么扩展，也不能超过原图的边界
-        %         xmin = max(xmin, 1);
-        %         ymin = max(ymin, 1);
-        %         xmax = min(xmax, size(skeletImg,2));
-        %         ymax = min(ymax, size(skeletImg,1));
-        %         % 扩展后的bbox的结果展示
-        %         expandedBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1];
-        %         overlapRatio = bboxOverlap(expandedBBoxes, expandedBBoxes);
-        %         % 设bbox与它自己没有连通关系
-        %         n = size(overlapRatio,1);
-        %         overlapRatio(1:n+1:n^2) = 0;
-        %         % Create the graph
-        %         gh = graph(overlapRatio);
-        %         % Find the connected text regions within the graph
-        %         componentIndices = conncomp(gh);
-        %         % Merge the boxes based on the minimum and maximum dimensions.
-        %         xmin = accumarray(componentIndices', xmin, [], @min);
-        %         ymin = accumarray(componentIndices', ymin, [], @min);
-        %         xmax = accumarray(componentIndices', xmax, [], @max);
-        %         ymax = accumarray(componentIndices', ymax, [], @max);
-        %         % Compose the merged bounding boxes using the [x y width height] format.
-        %         xmin( find(xmin~=1))=xmin( find(xmin~=1))+x_expansionAmount;
-        %         xmax(find(xmax==size(skeletImg,2)))=xmax(find(xmax==size(skeletImg,2)))+x_expansionAmount;
-        %         textBBoxes = [xmin ymin min(xmax-xmin+1-x_expansionAmount,size(skeletImg,2)-xmin) ymax-ymin+1];
-        %
-        %         % 文本行聚类结果
-        %         afterTextLine = insertShape(skeletImg, 'Rectangle', textBBoxes,'LineWidth',1);
-        %         afterTextLineNum=size(textBBoxes,1);
-        %         for ii=1:afterTextLineNum
-        %             text_str{ii} = num2str(ii);
-        %         end
-        %         afterTextLine = insertText(afterTextLine,textBBoxes(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','green');
-        %         clear text_str
-        %         save_name=[img_value '-' num2str(i) '-merge-' num2str(afterTextLineNum) '.bmp'];
-        %         imwrite(1-afterTextLine,save_name);
-        
-
-  
-        
-        %        %% 分类器： MSER 属性 判断文字/非文字
-        %         %CNN
-        %         addpath(genpath('/detectorDemo'));
-        %         for ii=1:size(textBBoxes,1)
-        %             %先选择SF
-        %             gBbox=g(textBBoxes(ii,2):textBBoxes(ii,2)+textBBoxes(ii,4)-1,textBBoxes(ii,1):textBBoxes(ii,1)+textBBoxes(ii,3),:);
-        %             save_gBname=[img_value '-' num2str(ii)  '.bmp'];
-        %             runDetectorDemo(gBbox,save_gBname);
-        %         end
-        %
-        %
-        %
-        %         % 最稳定文字边缘：在某个阈值分割下跳出；当前阈值分割下，文字边缘最显著
-        %         break;
+               
+        %% 分类器： MSER 属性 判断文字/非文字
+        %CNN
+        addpath(genpath('/detectorDemo'));
+        for ii=1:size(bbox,1)
+            gBbox=g(bbox(ii,2):bbox(ii,2)+bbox(ii,4)-1,bbox(ii,1):bbox(ii,1)+bbox(ii,3),:);
+            figure;imshow(gBbox);
+            if size(gBbox, 3) > 1, gBbox = rgb2gray(gBbox); end;
+            gBbox = imresize(gBbox, [32, 100]);
+            gBbox = single(gBbox);
+            s = std(gBbox(:));
+            gBbox = gBbox - mean(gBbox(:));
+            gBbox = gBbox / ((s + 0.0001) / 128.0);
+            net = load('ngramnet.mat');
+            stime = tic;
+            res = vl_simplenn(net, gBbox);
+            fprintf('CHAR Detection %.2fs\n', toc(stime));
+            s = '0123456789abcdefghijklmnopqrstuvwxyz ';
+            [score,~] = max(res(end).x(:));
+            [~,pred] = max(res(end).x, [], 1);
+            fprintf('Predicted text: %s\t%f\n', s(pred),score);           
+            close all;
+        end       
     end
 end
 
