@@ -229,12 +229,12 @@ for indexImg = 1:num_img
             score=runDetectorDemo_salient(gBbox);
             
             if score>0
-                salientMapg(textBBoxes(ii,2):textBBoxes(ii,2)+textBBoxes(ii,4)-1,textBBoxes(ii,1):textBBoxes(ii,1)+textBBoxes(ii,3))=1;
+                salientMap(textBBoxes(ii,2):textBBoxes(ii,2)+textBBoxes(ii,4)-1,textBBoxes(ii,1):textBBoxes(ii,1)+textBBoxes(ii,3))=1;
             end
            
         end
         save_name=[img_value '-salient' num2str(i) '.jpg'];
-        imwrite(salientMapg,save_name);
+        imwrite(salientMap,save_name);
         clear salientMap
         clear textBBoxes
     end
