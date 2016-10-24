@@ -24,7 +24,7 @@ t_model.opts.nms=0;                 % set to true to enable nms
 %% Maximally Stable Edge Text Detector 最稳定边缘文字检测子
 dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\*.jpg');
 num_img = length(dir_img);
-for indexImg = 78:78
+for indexImg = 18:18
     
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -51,6 +51,9 @@ for indexImg = 78:78
     
     
     %% 【1】边缘稳定稳定性
+    
+    % fusion阶段要用
+    fusionBbox=[];
     
     for i=mseBegin:1:mseEnd
         E1=E_tmp;
@@ -201,37 +204,45 @@ for indexImg = 78:78
         xmax(find(xmax==size(skeletImg,2)))=xmax(find(xmax==size(skeletImg,2)))+x_expansionAmount;
         textBBoxes = [xmin ymin min(xmax-xmin+1-x_expansionAmount,size(skeletImg,2)-xmin) ymax-ymin+1];
         
-        % 文本行聚类结果
-        afterTextLine = insertShape(skeletImg, 'Rectangle', textBBoxes,'LineWidth',1);
-        afterTextLineNum=size(textBBoxes,1);
-        for ii=1:afterTextLineNum
-            text_str{ii} = num2str(ii);
-        end
-        afterTextLine = insertText(afterTextLine,textBBoxes(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','green');
-        clear text_str
-        save_name=[img_value '-' num2str(i) '-merge-' num2str(afterTextLineNum) '.jpg'];
-        imwrite(1-afterTextLine,save_name);
-        
         
         %% 分类器：
         
         addpath(genpath('/detectorDemo'));
-        fusionBboxNum=[];
-        fusionBboxScore=[];
+        
+        
         for ii=1:size(textBBoxes,1)
+            
             gBbox=g(textBBoxes(ii,2):textBBoxes(ii,2)+textBBoxes(ii,4)-1,textBBoxes(ii,1):textBBoxes(ii,1)+textBBoxes(ii,3),:);
-            score=runDetectorDemo_salient(gBbox);           
+            score=runDetectorDemo_salient(gBbox);
             if score>0
-                fusionBboxNum=[fusionBboxNum ii];
-                fusionBboxScore=[fusionBboxScore score];
-            end           
+                fusionBbox=[fusionBbox ; [textBBoxes(ii,:) score]];
+            end
         end
         
-        %将各个
         
         
         clear textBBoxes
     end
+    
+    %% fusion阶段：
+    
+    [fusionBbox, fusionBboxScore]=selectStrongestBbox(fusionBbox(:,1:4),fusionBbox(:,5),'RatioType','Min','OverlapThreshold',0.85);
+    fusionBbox=[fusionBbox fusionBboxScore];
+    fusionBboxName=[img_value '-fusion''.mat'];
+    save (fusionBboxName ,'fusionBbox' );
+    
+    % 分类器处理后各个阈值的结果展示
+    afterfusion = insertShape(g, 'Rectangle', fusionBbox(:,1:4),'LineWidth',1);
+    afterfusionNum=size(fusionBbox,1);
+    for ii=1:afterfusionNum
+        text_str{ii} = num2str(fusionBbox(ii,5));
+    end
+    afterfusion = insertText(afterfusion,fusionBbox(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','red');
+    clear text_str
+    save_name=[img_value '-fusion' '.bmp'];
+    imwrite(afterfusion,save_name);
+    
+    
 end
 
 

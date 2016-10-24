@@ -52,6 +52,9 @@ for indexImg = 46:46
     
     %% 【1】边缘稳定稳定性
     
+    % fusion阶段要用
+    fusionBbox=[];
+    
     for i=mseBegin:1:mseEnd
         E1=E_tmp;
         %自适应阈值分割
@@ -205,49 +208,41 @@ for indexImg = 46:46
         %% 分类器：
         
         addpath(genpath('/detectorDemo'));
-        fusionBboxIdx=[];
-        fusionBboxScore=[];
+        
+        
         for ii=1:size(textBBoxes,1)
-            
-            %通过bbox的aspect、面积比、response等等滤除掉不合适的bbox
-            
-            %
             
             gBbox=g(textBBoxes(ii,2):textBBoxes(ii,2)+textBBoxes(ii,4)-1,textBBoxes(ii,1):textBBoxes(ii,1)+textBBoxes(ii,3),:);
             score=runDetectorDemo_salient(gBbox);
             if score>0
-                fusionBboxIdx=[fusionBboxIdx ii];
-                fusionBboxScore=[fusionBboxScore score];
+                fusionBbox=[fusionBbox ; [textBBoxes(ii,:) score]];
             end
         end
         
-        %将各个阈值下的bbox及其score保存下来
-        fusionBboxNum=0;
-        fusionBboxNum=size(fusionBboxIdx,2);
-        if fusionBboxNum==0
-            continue
-        end
-        fusionBbox=zeros(fusionBboxNum,5);
-        for jj=1:fusionBboxNum
-            fusionBbox(jj,:)=[textBBoxes(fusionBboxIdx(1,jj),:) fusionBboxScore(1,jj)];
-        end
-        fusionBboxName=[img_value '-fusion-' num2str(i) '.mat'];
-        save (fusionBboxName ,'fusionBbox' );
-        
-        % 分类器处理后各个阈值的结果展示
-        afterClassifier = insertShape(g, 'Rectangle', fusionBbox(:,1:4),'LineWidth',1);
-        afterClassifierNum=size(fusionBbox,1);
-        for ii=1:afterClassifierNum
-            text_str{ii} = num2str(fusionBbox(ii,5));
-        end
-        afterClassifier = insertText(afterClassifier,fusionBbox(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','red');
-        clear text_str
-        save_name=[img_value '-' num2str(i) '-fusion-' num2str(i) '.bmp'];
-        imwrite(afterClassifier,save_name);
         
         
         clear textBBoxes
     end
+    
+    %% fusion阶段：
+    
+    [fusionBbox, fusionBboxScore]=selectStrongestBbox(fusionBbox(:,1:4),fusionBbox(:,5));
+    fusionBbox=[fusionBbox];
+    fusionBboxName=[img_value '-fusion-' num2str(indexImg) '.mat'];
+    save (fusionBboxName ,'fusionBbox' );
+    
+    % 分类器处理后各个阈值的结果展示
+    afterfusion = insertShape(g, 'Rectangle', fusionBbox(:,1:4),'LineWidth',1);
+    afterfusionNum=size(fusionBbox,1);
+    for ii=1:afterfusionNum
+        text_str{ii} = num2str(fusionBbox(ii,5));
+    end
+    afterfusion = insertText(afterfusion,fusionBbox(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','red');
+    clear text_str
+    save_name=[img_value '-fusion-' num2str(indexImg) '.bmp'];
+    imwrite(afterfusion,save_name);
+    
+    
 end
 
 
