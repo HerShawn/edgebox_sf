@@ -24,7 +24,7 @@ t_model.opts.nms=0;                 % set to true to enable nms
 %% Maximally Stable Edge Text Detector 最稳定边缘文字检测子
 dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\*.jpg');
 num_img = length(dir_img);
-for indexImg = 1:1
+for indexImg = 78:78
     
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -50,9 +50,9 @@ for indexImg = 1:1
     end
     
     
-    %% 【1】边缘稳定稳定性 
-    %     for i=begin_index:1:20
-     for i=mseBegin:1:mseEnd
+    %% 【1】边缘稳定稳定性
+    
+    for i=mseBegin:1:mseEnd
         E1=E_tmp;
         %自适应阈值分割
         thresh=median(median(E1(find(E1>(i/100)))));
@@ -73,7 +73,7 @@ for indexImg = 1:1
         
         %在当前阈值分割下的结果展示
         bbox = vertcat(edgeStats.BoundingBox);
-             
+        
         %% 【2】形态学判别
         
         %滤掉太小面积的
@@ -98,7 +98,7 @@ for indexImg = 1:1
         if((length(find([edgeStats.EulerNumber] <= -10 ))>2)||(length(edgeStats)>200))
             continue;
         end
-                               
+        
         %2016-10-16【去掉一个像素的】
         filter_index=[];
         for ii=1:length(edgeStats)
@@ -109,24 +109,24 @@ for indexImg = 1:1
             row1=find(sum(statsImg')==1);
             filter_index1=[];
             if length(row1)/h>0.8
-            col1=zeros(1,length(row1));
-            for iii=1:length(row1)
-                [~,col]=find(statsImg(row1(iii),:)~=0);
-                col1(1,iii)=col;
-            end
-            filter_index1=[col1+floor( edgeStats(ii).BoundingBox(1,1));row1+floor( edgeStats(ii).BoundingBox(1,2))];
+                col1=zeros(1,length(row1));
+                for iii=1:length(row1)
+                    [~,col]=find(statsImg(row1(iii),:)~=0);
+                    col1(1,iii)=col;
+                end
+                filter_index1=[col1+floor( edgeStats(ii).BoundingBox(1,1));row1+floor( edgeStats(ii).BoundingBox(1,2))];
             end
             
             %横向
             col2=find(sum(statsImg)==1);
             filter_index2=[];
             if length(col2)/w>0.8
-            row2=zeros(1,length(col2));
-            for iii=1:length(col2)
-                [row,~]=find(statsImg(:,col2(iii))~=0);
-                row2(1,iii)=row;
-            end
-            filter_index2=[col2+floor( edgeStats(ii).BoundingBox(1,1));row2+floor( edgeStats(ii).BoundingBox(1,2))];
+                row2=zeros(1,length(col2));
+                for iii=1:length(col2)
+                    [row,~]=find(statsImg(:,col2(iii))~=0);
+                    row2(1,iii)=row;
+                end
+                filter_index2=[col2+floor( edgeStats(ii).BoundingBox(1,1));row2+floor( edgeStats(ii).BoundingBox(1,2))];
             end
             filter_index=[filter_index filter_index1 filter_index2];
         end
@@ -139,18 +139,18 @@ for indexImg = 1:1
         [L,num] = bwlabel(skeletImg,8);
         edgeStats = regionprops(L, 'BoundingBox', 'Area', ...
             'FilledArea','Extent' ,'ConvexArea','Image',...
-            'EulerNumber','Solidity','Eccentricity','PixelList');  
+            'EulerNumber','Solidity','Eccentricity','PixelList');
         %在当前阈值分割下的结果展示
         bbox = vertcat(edgeStats.BoundingBox);
-                
+        
         %滤掉太小面积的
-        filterIdx = [edgeStats.FilledArea] < 50 ;   
+        filterIdx = [edgeStats.FilledArea] < 50 ;
         %宽高比
         w = bbox(:,3);
         h = bbox(:,4);
         aspectRatio = w./h;
         filterIdx = filterIdx | aspectRatio' > 8 ;
-        filterIdx = filterIdx |  aspectRatio' <1/7 ;      
+        filterIdx = filterIdx |  aspectRatio' <1/7 ;
         %不符合形态学的都滤除掉
         
         if  size(edgeStats,1)==length(find(filterIdx))
@@ -160,12 +160,9 @@ for indexImg = 1:1
         edgeStats(filterIdx) = [];
         clear filterIdx
         bbox = vertcat(edgeStats.BoundingBox);
-            
-        
-       
         
         
-       %% 文本行分析 一行的高 排序 离群 粘连点 
+        %% 文本行分析 一行的高 排序 离群 粘连点
         
         % 从 [x y width height] 到 [xmin ymin xmax ymax]
         xmin = bbox(:,1);
@@ -193,7 +190,7 @@ for indexImg = 1:1
         % Create the graph
         gh = graph(overlapRatio);
         % Find the connected text regions within the graph
-        componentIndices = conncomp(gh);        
+        componentIndices = conncomp(gh);
         % Merge the boxes based on the minimum and maximum dimensions.
         xmin = accumarray(componentIndices', xmin, [], @min);
         ymin = accumarray(componentIndices', ymin, [], @min);
@@ -203,38 +200,53 @@ for indexImg = 1:1
         xmin( find(xmin~=1))=xmin( find(xmin~=1))+x_expansionAmount;
         xmax(find(xmax==size(skeletImg,2)))=xmax(find(xmax==size(skeletImg,2)))+x_expansionAmount;
         textBBoxes = [xmin ymin min(xmax-xmin+1-x_expansionAmount,size(skeletImg,2)-xmin) ymax-ymin+1];
-       
-        % 文本行聚类结果
-        afterTextLine = insertShape(skeletImg, 'Rectangle', textBBoxes,'LineWidth',1);
-        afterTextLineNum=size(textBBoxes,1);
-        for ii=1:afterTextLineNum
-            text_str{ii} = num2str(ii);
-        end
-        afterTextLine = insertText(afterTextLine,textBBoxes(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','green');
-        clear text_str
-        save_name=[img_value '-' num2str(i) '-merge-' num2str(afterTextLineNum) '.jpg'];
-        imwrite(1-afterTextLine,save_name);
         
-
-  
         
-       %% 分类器： 
-        %CNN
+        %% 分类器：
+        
         addpath(genpath('/detectorDemo'));
-        salientMap=zeros(size(g,1),size(g,2));
-        for ii=1:size(textBBoxes,1)     
-            %先选择SF
+        fusionBboxIdx=[];
+        fusionBboxScore=[];
+        for ii=1:size(textBBoxes,1)
+            
+            %通过bbox的aspect、面积比、response等等滤除掉不合适的bbox
+            
+            %
+            
             gBbox=g(textBBoxes(ii,2):textBBoxes(ii,2)+textBBoxes(ii,4)-1,textBBoxes(ii,1):textBBoxes(ii,1)+textBBoxes(ii,3),:);
-%             save_gBname=[img_value '-阈值' num2str(i) '-bbox' num2str(ii)];
             score=runDetectorDemo_salient(gBbox);
-            
-            if 1
-                
+            if score>0
+                fusionBboxIdx=[fusionBboxIdx ii];
+                fusionBboxScore=[fusionBboxScore score];
             end
-            
         end
         
-
+        %将各个阈值下的bbox及其score保存下来
+        fusionBboxNum=0;
+        fusionBboxNum=size(fusionBboxIdx,2);
+        if fusionBboxNum==0
+            continue
+        end
+        fusionBbox=zeros(fusionBboxNum,5);
+        for jj=1:fusionBboxNum
+            fusionBbox(jj,:)=[textBBoxes(fusionBboxIdx(1,jj),:) fusionBboxScore(1,jj)];
+        end
+        fusionBboxName=[img_value '-fusion-' num2str(i) '.mat'];
+        save (fusionBboxName ,'fusionBbox' );
+        
+        % 分类器处理后各个阈值的结果展示
+        afterClassifier = insertShape(g, 'Rectangle', fusionBbox(:,1:4),'LineWidth',1);
+        afterClassifierNum=size(fusionBbox,1);
+        for ii=1:afterClassifierNum
+            text_str{ii} = num2str(fusionBbox(ii,5));
+        end
+        afterClassifier = insertText(afterClassifier,fusionBbox(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','red');
+        clear text_str
+        save_name=[img_value '-' num2str(i) '-fusion-' num2str(i) '.bmp'];
+        imwrite(afterClassifier,save_name);
+        
+        
+        clear textBBoxes
     end
 end
 

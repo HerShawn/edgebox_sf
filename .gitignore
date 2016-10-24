@@ -12,6 +12,7 @@
 *.jpg
 *.txt
 *.bmp
+*.mat
 
 
 # Windows image file caches
