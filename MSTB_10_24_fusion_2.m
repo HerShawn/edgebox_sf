@@ -24,7 +24,7 @@ t_model.opts.nms=0;                 % set to true to enable nms
 %% Maximally Stable Edge Text Detector 最稳定边缘文字检测子
 dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\*.jpg');
 num_img = length(dir_img);
-for indexImg = 18:18
+for indexImg = 233:233
     
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -55,6 +55,8 @@ for indexImg = 18:18
     % fusion阶段要用
     fusionBbox=[];
     
+    %
+    skipNum=0;
     for i=mseBegin:1:mseEnd
         E1=E_tmp;
         %自适应阈值分割
@@ -98,8 +100,11 @@ for indexImg = 18:18
         edgeStats(filterIdx) = [];
         clear filterIdx
         
-        if((length(find([edgeStats.EulerNumber] <= -10 ))>2)||(length(edgeStats)>200))
-            continue;
+        if((length(find([edgeStats.EulerNumber] <= -10 ))>2)||(length(edgeStats)>150))
+            skipNum=skipNum+1;
+            if skipNum~=mseEnd
+                continue;
+            end
         end
         
         %2016-10-16【去掉一个像素的】
@@ -225,6 +230,10 @@ for indexImg = 18:18
     end
     
     %% fusion阶段：
+    
+    if size(fusionBbox,1)==0
+        continue
+    end
     
     [fusionBbox, fusionBboxScore]=selectStrongestBbox(fusionBbox(:,1:4),fusionBbox(:,5),'RatioType','Min','OverlapThreshold',0.85);
     fusionBbox=[fusionBbox fusionBboxScore];

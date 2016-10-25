@@ -24,7 +24,7 @@ t_model.opts.nms=0;                 % set to true to enable nms
 %% Maximally Stable Edge Text Detector 最稳定边缘文字检测子
 dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\*.jpg');
 num_img = length(dir_img);
-for indexImg = 46:46
+for indexImg = 38:38
     
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -55,6 +55,8 @@ for indexImg = 46:46
     % fusion阶段要用
     fusionBbox=[];
     
+    %
+    skipNum=0;
     for i=mseBegin:1:mseEnd
         E1=E_tmp;
         %自适应阈值分割
@@ -98,8 +100,10 @@ for indexImg = 46:46
         edgeStats(filterIdx) = [];
         clear filterIdx
         
-        if((length(find([edgeStats.EulerNumber] <= -10 ))>2)||(length(edgeStats)>200))
+        if((length(find([edgeStats.EulerNumber] <= -10 ))>2)||(length(edgeStats)>150))
+            if i
             continue;
+            end
         end
         
         %2016-10-16【去掉一个像素的】
@@ -226,9 +230,9 @@ for indexImg = 46:46
     
     %% fusion阶段：
     
-    [fusionBbox, fusionBboxScore]=selectStrongestBbox(fusionBbox(:,1:4),fusionBbox(:,5));
-    fusionBbox=[fusionBbox];
-    fusionBboxName=[img_value '-fusion-' num2str(indexImg) '.mat'];
+    [fusionBbox, fusionBboxScore]=selectStrongestBbox(fusionBbox(:,1:4),fusionBbox(:,5),'RatioType','Min','OverlapThreshold',0.85);
+    fusionBbox=[fusionBbox fusionBboxScore];
+    fusionBboxName=[img_value '-fusion''.mat'];
     save (fusionBboxName ,'fusionBbox' );
     
     % 分类器处理后各个阈值的结果展示
@@ -239,7 +243,7 @@ for indexImg = 46:46
     end
     afterfusion = insertText(afterfusion,fusionBbox(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','red');
     clear text_str
-    save_name=[img_value '-fusion-' num2str(indexImg) '.bmp'];
+    save_name=[img_value '-fusion' '.bmp'];
     imwrite(afterfusion,save_name);
     
     
