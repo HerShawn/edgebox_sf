@@ -24,7 +24,7 @@ t_model.opts.nms=0;                 % set to true to enable nms
 %% Maximally Stable Edge Text Detector 最稳定边缘文字检测子
 dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\*.jpg');
 num_img = length(dir_img);
-for indexImg = 197:num_img
+for indexImg = 99:99
     
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -51,7 +51,7 @@ for indexImg = 197:num_img
     
     
     %% 【1】边缘稳定稳定性 
-    %     for i=begin_index:1:20
+    skipNum=0;
      for i=mseBegin:1:mseEnd
         E1=E_tmp;
         %自适应阈值分割
@@ -96,7 +96,10 @@ for indexImg = 197:num_img
         clear filterIdx
         
         if((length(find([edgeStats.EulerNumber] <= -10 ))>2)||(length(edgeStats)>200))
-            continue;
+            skipNum=skipNum+1;
+            if skipNum~=mseEnd
+                continue;
+            end
         end
                                
         %2016-10-16【去掉一个像素的】
