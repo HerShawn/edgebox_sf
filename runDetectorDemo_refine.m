@@ -27,7 +27,7 @@ score = findLinesFull_2016(responses);
 set(h,'name',num2str(score));
 % visualizeBoxes(img, boxes,save_gBname);
 saveas(h,[save_gBname '-score' num2str(score) '.jpg']); 
-% close all;
+close all;
 
 % if exist('outputDir')
 %   system(['mkdir -p ', outputDir]);

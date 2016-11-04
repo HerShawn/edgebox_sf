@@ -23,7 +23,7 @@ t_model.opts.nms=0;                 % set to true to enable nms
 %% 基于MSE（最稳定边缘）的文字边缘检测子
 dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\*.jpg');
 num_img = length(dir_img);
-for indexImg = 184:184
+for indexImg = 212:212
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
     % 如果fusion.mat存在，则直接进入refine阶段
@@ -244,7 +244,7 @@ for indexImg = 184:184
     end
     refineBboxName=[img_value '-refine' '.mat'];
     save (refineBboxName ,'fusionBbox' );
-    % 分类器处理后各个阈值的结果展示
+    % refine处理后的结果展示
     afterRefine = insertShape(g, 'Rectangle', fusionBbox(:,1:4),'LineWidth',1);
     afterRefineNum=size(fusionBbox,1);
     for ii=1:afterRefineNum

@@ -23,7 +23,7 @@ t_model.opts.nms=0;                 % set to true to enable nms
 %% 基于MSE（最稳定边缘）的文字边缘检测子
 dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\*.jpg');
 num_img = length(dir_img);
-for indexImg = 184:184
+for indexImg = 34:64
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
     % 如果fusion.mat存在，则直接进入refine阶段
@@ -199,52 +199,70 @@ for indexImg = 184:184
             end
             clear textBBoxes
         end
-    %% MSE+文本行+classify阶段结束
-    
-    %% 【8】fusion阶段：
-    if size(fusionBbox,1)==0
-        continue
-    end
-    %     [fusionBbox, fusionBboxScore]=selectStrongestBbox(fusionBbox(:,1:4),fusionBbox(:,5),'RatioType','Min','OverlapThreshold',0.85);
-    [fusionBbox, fusionBboxScore]=selectStrongestBbox(fusionBbox(:,1:4),fusionBbox(:,5));
-    fusionBbox=[fusionBbox fusionBboxScore];
-    fusionBboxName=[img_value '-fusion' '.mat'];
-    save (fusionBboxName ,'fusionBbox' );
-    % 分类器处理后各个阈值的结果展示
-    afterfusion = insertShape(g, 'Rectangle', fusionBbox(:,1:4),'LineWidth',1);
-    afterfusionNum=size(fusionBbox,1);
-    for ii=1:afterfusionNum
-        text_str{ii} = num2str(fusionBbox(ii,5));
-    end
-    afterfusion = insertText(afterfusion,fusionBbox(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','red');
-    clear text_str
-    save_name=[img_value '-fusion' '.bmp'];
-    imwrite(afterfusion,save_name);    
+        %% MSE+文本行+classify阶段结束
+        
+        %% 【8】fusion阶段：
+        if size(fusionBbox,1)==0
+            continue
+        end
+        %     [fusionBbox, fusionBboxScore]=selectStrongestBbox(fusionBbox(:,1:4),fusionBbox(:,5),'RatioType','Min','OverlapThreshold',0.85);
+        [fusionBbox, fusionBboxScore]=selectStrongestBbox(fusionBbox(:,1:4),fusionBbox(:,5));
+        fusionBbox=[fusionBbox fusionBboxScore];
+        fusionBboxName=[img_value '-fusion' '.mat'];
+        save (fusionBboxName ,'fusionBbox' );
+        % 分类器处理后各个阈值的结果展示
+        afterfusion = insertShape(g, 'Rectangle', fusionBbox(:,1:4),'LineWidth',1);
+        afterfusionNum=size(fusionBbox,1);
+        for ii=1:afterfusionNum
+            text_str{ii} = num2str(fusionBbox(ii,5));
+        end
+        afterfusion = insertText(afterfusion,fusionBbox(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','red');
+        clear text_str
+        save_name=[img_value '-fusion' '.bmp'];
+        imwrite(afterfusion,save_name);
     end %  if(~exist([img_value '-fusion.mat'], 'file'))到这里就结束了
- 
+    
     %% 【9】refine阶段：
     load([img_value '-fusion.mat']);
     img_name = ['C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\' img_value '.jpg'];
     g = imread(img_name);
-    eliminateIdx=[];
-    for ii=1:size(fusionBbox,1)
-        if fusionBbox(ii,4)/fusionBbox(ii,3)>2 || fusionBbox(ii,5)<0.1
-            eliminateIdx=[eliminateIdx ii];
-            continue
-        end
-        gBbox=g(fusionBbox(ii,2):fusionBbox(ii,2)+fusionBbox(ii,4)-1,fusionBbox(ii,1):fusionBbox(ii,1)+fusionBbox(ii,3),:);
-        score=runDetectorDemo_refine_classifier(gBbox,ii);
-        if score==0
-            eliminateIdx=[eliminateIdx ii];
-        end    
-    end
-    fusionBbox(eliminateIdx,:)=[];
+    
+    %% 分类器是影响效果最重要的一环
+    % text line -> fusion  ***在【7】分类器应当实现的【关键步骤】！
+    % fusion -> refine 从【8】fusion阶段到【9】refine阶段的附加步骤。
+    
+    %     eliminateIdx=[];
+    %     for ii=1:size(fusionBbox,1)
+    %         if fusionBbox(ii,4)/fusionBbox(ii,3)>2 || fusionBbox(ii,5)<0.1
+    %             eliminateIdx=[eliminateIdx ii];
+    %             continue
+    %         end
+    %         gBbox=g(fusionBbox(ii,2):fusionBbox(ii,2)+fusionBbox(ii,4)-1,fusionBbox(ii,1):fusionBbox(ii,1)+fusionBbox(ii,3),:);
+    %         save_gBname=[img_value '-bbox' num2str(ii)];
+    %         score=runDetectorDemo_refine_classifier(gBbox,save_gBname);
+    %         if score==0
+    %             eliminateIdx=[eliminateIdx ii];
+    %         end
+    %     end
+    %     fusionBbox(eliminateIdx,:)=[];
+    %     if size(fusionBbox,1)==0
+    %         continue
+    %     end
+    %%
+    
+    %计算fusionbbox所在行的response
     if size(fusionBbox,1)==0
         continue
     end
+    for ii=1:size(fusionBbox,1)
+        save_gBname=[img_value '-bbox' num2str(ii)];
+        gBbox=g(fusionBbox(ii,2):fusionBbox(ii,2)+fusionBbox(ii,4)-1,1:end,:);
+        score=runDetectorDemo_refine(gBbox,save_gBname);
+    end
+        
     refineBboxName=[img_value '-refine' '.mat'];
     save (refineBboxName ,'fusionBbox' );
-    % 分类器处理后各个阈值的结果展示
+    % refine处理后的结果展示
     afterRefine = insertShape(g, 'Rectangle', fusionBbox(:,1:4),'LineWidth',1);
     afterRefineNum=size(fusionBbox,1);
     for ii=1:afterRefineNum
