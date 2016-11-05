@@ -161,8 +161,7 @@ for indexImg = 36:36
             y_expansionAmount=0.01;
             ymin = (1-y_expansionAmount) * ymin;
             ymax = (1+y_expansionAmount) * ymax;
-            x_expansionAmount=max(ceil(((ymax-ymin)-(xmax-xmin)+8)/2),ceil((ymax-ymin)/4));
-            
+            x_expansionAmount=max(ceil(((ymax-ymin)-(xmax-xmin)+8)/2),ceil((ymax-ymin)/4));     
             xmin = xmin-x_expansionAmount;
             xmax =xmax+x_expansionAmount;
             % bbox再怎么扩展，也不能超过原图的边界
@@ -170,10 +169,28 @@ for indexImg = 36:36
             ymin = max(ymin, 1);
             xmax = min(xmax, size(skeletImg,2));
             ymax = min(ymax, size(skeletImg,1));
-            % 扩展后的bbox的结果展示
+            % 11-5:去掉内部包含太多的bbox，该bbox很可能是牌子
+            
             expandedBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1];
-            afterExpend=insertShape(g, 'Rectangle', expandedBBoxes(:,1:4),'LineWidth',1);
-            save_name=[img_value '-txtLine-' num2str(i) '.jpg'];
+            overlapRatio = bboxOverlapRatio(expandedBBoxes, expandedBBoxes,'ratioType','Min');
+            % 设bbox与它自己没有连通关系
+            n = size(overlapRatio,1);
+            overlapRatio(1:n+1:n^2) = 0;
+            %找到内含bbox个数过多的bbox并删去
+            overlap_index=zeros(1,n);
+            for oi=1:n
+                overlap_index(1,oi)=length(find(overlapRatio(oi,:)==1));
+            end
+            expandedBBoxes(find(overlap_index>10),:)=[];
+            % 扩展后的bbox的结果展示
+            afterExpend=insertShape(g, 'Rectangle', expandedBBoxes(:,1:4),'LineWidth',1);    
+            afterExpendNum=size(expandedBBoxes,1);
+            for ii=1:afterExpendNum
+                text_str{ii} = num2str(ii);
+            end
+            afterExpend = insertText(afterExpend,expandedBBoxes(:,1:2),text_str,'FontSize',12,'BoxOpacity',0,'TextColor','red');
+            clear text_str       
+            save_name=[img_value '-txtLine-' num2str(i) '.bmp'];
             imwrite(afterExpend,save_name);
             
             %             overlapRatio = bboxOverlap(expandedBBoxes, expandedBBoxes);
