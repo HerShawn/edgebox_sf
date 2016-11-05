@@ -23,7 +23,7 @@ t_model.opts.nms=0;                 % set to true to enable nms
 %% 基于MSE（最稳定边缘）的文字边缘检测子
 dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\*.jpg');
 num_img = length(dir_img);
-for indexImg = 1:1
+for indexImg = 36:36
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
     % 如果fusion.mat存在，则直接进入refine阶段
@@ -159,10 +159,9 @@ for indexImg = 1:1
             ymax = ymin + bbox(:,4) - 1;
             % 扩展bbox,使得bbox可以聚集成文本行
             y_expansionAmount=0.01;
-            % x_expansionAmount = median(bbox(:,3))/2;
-            x_expansionAmount=max(ceil(((ymax-ymin)-(xmax-xmin)+8)/2),ceil((ymax-ymin)/4));
             ymin = (1-y_expansionAmount) * ymin;
             ymax = (1+y_expansionAmount) * ymax;
+            x_expansionAmount=max(ceil(((ymax-ymin)-(xmax-xmin)+8)/2),ceil((ymax-ymin)/4));
             
             xmin = xmin-x_expansionAmount;
             xmax =xmax+x_expansionAmount;
