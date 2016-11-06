@@ -176,22 +176,24 @@ for indexImg = 36:36
             % 设bbox与它自己没有连通关系
             n = size(overlapRatio,1);
             overlapRatio(1:n+1:n^2) = 0;
-            %找到内含bbox个数过多的bbox
+            %找到内含bbox个数过多的bbox并删去
             overlap_index=zeros(1,n);
             for oi=1:n
-                overlap_index(1,oi)=length(find(overlapRatio(oi,:)>0));
+                overlap_index(1,oi)=length(find(overlapRatio(oi,:)==1));
             end
+            expandedBBoxes(find(overlap_index>10),:)=[];
             % 扩展后的bbox的结果展示
-            afterExpend=insertShape(g, 'Rectangle', expandedBBoxes(:,1:4),'LineWidth',1);
-            
+            afterExpend=insertShape(g, 'Rectangle', expandedBBoxes(:,1:4),'LineWidth',1);    
             afterExpendNum=size(expandedBBoxes,1);
             for ii=1:afterExpendNum
                 text_str{ii} = num2str(ii);
+                gBbox=g(expandedBBoxes(ii,2):expandedBBoxes(ii,2)+expandedBBoxes(ii,4)-1,expandedBBoxes(ii,1):expandedBBoxes(ii,1)+expandedBBoxes(ii,3),:);
+                save_gBname=[img_value '-bbox' num2str(ii)];
+                score=runDetectorDemo_refine_classifier(gBbox,save_gBname);
             end
             afterExpend = insertText(afterExpend,expandedBBoxes(:,1:2),text_str,'FontSize',12,'BoxOpacity',0,'TextColor','red');
-            clear text_str
-            
-            save_name=[img_value '-txtLine-' num2str(i) '.jpg'];
+            clear text_str       
+            save_name=[img_value '-txtLine-' num2str(i) '.bmp'];
             imwrite(afterExpend,save_name);
             
             %             overlapRatio = bboxOverlap(expandedBBoxes, expandedBBoxes);

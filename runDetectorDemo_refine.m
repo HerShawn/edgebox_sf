@@ -6,7 +6,8 @@ addpath(genpath('../finetune'));
 % load first layer features
 load models/detectorCentroids_96.mat
 % load detector model
-load models/CNN-B256.mat
+% load models/CNN-B256.mat
+load models/cnn_refine.mat
 
 fprintf('Constructing filter stack...\n');
 filterStack = cstackToFilterStack(params, netconfig, centroids, P, M, [2,2,256]);
