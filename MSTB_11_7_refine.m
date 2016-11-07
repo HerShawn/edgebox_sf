@@ -23,19 +23,24 @@ t_model.opts.nms=0;                 % set to true to enable nms
 %% 基于MSE（最稳定边缘）的文字边缘检测子
 dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\*.jpg');
 num_img = length(dir_img);
-for indexImg = 1:num_img
+load('initialSfIdx');
+
+for indexImg = 198:198
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
     % 如果fusion.mat存在，则直接进入refine阶段
     % 否则，从MSE,text line analysis,classifier,fusion一步一步做，直到得到fusion.mat
-    if(~exist([img_value '-fusion.mat'], 'file'))
+    if(~exist([img_value '-' num2str(initialSfIdx(1,indexImg)) '.mat'], 'file'))
         img_name = ['C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\' img_value '.jpg'];
         g = imread(img_name);
         E1=edgesDetect(g,t_model);
         E_tmp=E1;
         %自适应的设置起始阈值分割起始
-        load('initialSfIdx');
-        E_thresh=;
+        
+        E_thresh=initialSfIdx(1,indexImg);
+        E_thresh2=median(median(E1(find(E1>0))));
+        E_thresh2= round(100*median(median(E1(find(E1>E_thresh2)))));
+        E_thresh=max(E_thresh,E_thresh2);
         %% 【1】边缘稳定性
         % fusion各个阈值中的bbox，用(NMS,overlap,0.5)
         fusionBbox=[];
@@ -43,7 +48,7 @@ for indexImg = 1:num_img
         skipNum=0;
         % 边缘稳定性的实现：一个自适应的阈值范围
         %         for i=mseBegin:1:mseEnd
-        for i=16:1:16
+        for i=E_thresh:10:(E_thresh+10)
             E1=E_tmp;
             %自适应阈值分割
             thresh=median(median(E1(find(E1>(i/100)))));
@@ -77,14 +82,6 @@ for indexImg = 1:num_img
             end
             edgeStats(filterIdx) = [];
             clear filterIdx
-            %% 【4】 欧拉数/粘连点过多的skelet所在阈值不适合，跳过
-            if((length(find([edgeStats.EulerNumber] <= -10 ))>2)||(length(edgeStats)>150))
-                % 不能完全跳过
-                skipNum=skipNum+1;
-                if skipNum~=mseEnd
-                    continue;
-                end
-            end
             %% 【5】 1 pixel 特征
             filter_index=[];
             for ii=1:length(edgeStats)
@@ -141,7 +138,7 @@ for indexImg = 1:num_img
             bbox = vertcat(edgeStats.BoundingBox);
             %% MSE提取的proposals得到了，继续下面的粗、细定位步骤
             
-            %% 【6】文本行分析+refine（2016-11-4）
+            %% 【6】CNN分类器
             % 从 [x y width height] 到 [xmin ymin xmax ymax]
             xmin = bbox(:,1);
             ymin = bbox(:,2);
@@ -151,7 +148,7 @@ for indexImg = 1:num_img
             y_expansionAmount=0.01;
             ymin = (1-y_expansionAmount) * ymin;
             ymax = (1+y_expansionAmount) * ymax;
-            x_expansionAmount=max(ceil(((ymax-ymin)-(xmax-xmin)+8)/2),ceil((ymax-ymin)/4));     
+            x_expansionAmount=max(ceil(((ymax-ymin)-(xmax-xmin)+8)/2),ceil((ymax-ymin)/4));
             xmin = xmin-x_expansionAmount;
             xmax =xmax+x_expansionAmount;
             % bbox再怎么扩展，也不能超过原图的边界
@@ -173,80 +170,39 @@ for indexImg = 1:num_img
             end
             expandedBBoxes(find(overlap_index>10),:)=[];
             % 扩展后的bbox的结果展示
-            afterExpend=insertShape(g, 'Rectangle', expandedBBoxes(:,1:4),'LineWidth',1);    
+            afterExpend=insertShape(1-skeletImg, 'Rectangle', expandedBBoxes(:,1:4),'LineWidth',1,'Color','red');
             afterExpendNum=size(expandedBBoxes,1);
-            for ii=1:afterExpendNum
-                text_str{ii} = num2str(ii);
-                gBbox=g(expandedBBoxes(ii,2):expandedBBoxes(ii,2)+expandedBBoxes(ii,4)-1,expandedBBoxes(ii,1):expandedBBoxes(ii,1)+expandedBBoxes(ii,3)-1,:);
-                save_gBname=[img_value '-bbox' num2str(ii)];
-                score=runDetectorDemo_refine(gBbox,save_gBname);
+            if afterExpendNum==0
+                continue
             end
-            afterExpend = insertText(afterExpend,expandedBBoxes(:,1:2),text_str,'FontSize',12,'BoxOpacity',0,'TextColor','red');
-            clear text_str       
-            save_name=[img_value '-txtLine-' num2str(i) '.bmp'];
-            imwrite(afterExpend,save_name);
-            
-            %             overlapRatio = bboxOverlap(expandedBBoxes, expandedBBoxes);
-            %             % 设bbox与它自己没有连通关系
-            %             n = size(overlapRatio,1);
-            %             overlapRatio(1:n+1:n^2) = 0;
-            %             % Create the graph
-            %             gh = graph(overlapRatio);
-            %             % Find the connected text regions within the graph
-            %             componentIndices = conncomp(gh);
-            %             % Merge the boxes based on the minimum and maximum dimensions.
-            %             xmin = accumarray(componentIndices', xmin, [], @min);
-            %             ymin = accumarray(componentIndices', ymin, [], @min);
-            %             xmax = accumarray(componentIndices', xmax, [], @max);
-            %             ymax = accumarray(componentIndices', ymax, [], @max);
-            %             % Compose the merged bounding boxes using the [x y width height] format.
-            %             xmin( find(xmin~=1))=xmin( find(xmin~=1))+x_expansionAmount;
-            %             xmax(find(xmax==size(skeletImg,2)))=xmax(find(xmax==size(skeletImg,2)))+x_expansionAmount;
-            %             textBBoxes = [xmin ymin min(xmax-xmin+1-x_expansionAmount,size(skeletImg,2)-xmin) ymax-ymin+1];
-            %% 【7】分类器：
-            %             addpath(genpath('/detectorDemo'));
-            %             for ii=1:size(textBBoxes,1)
-            %                 gBbox=g(textBBoxes(ii,2):textBBoxes(ii,2)+textBBoxes(ii,4)-1,textBBoxes(ii,1):textBBoxes(ii,1)+textBBoxes(ii,3),:);
-            %                 score=runDetectorDemo_salient(gBbox);
-            %                 if score>0
-            %                     fusionBbox=[fusionBbox ; [textBBoxes(ii,:) score]];
-            %                 end
-            %             end
-            %             clear textBBoxes
+            afterClassifierIdx=zeros(1,afterExpendNum);
+            for ii=1:afterExpendNum
+                gBbox=g(expandedBBoxes(ii,2):expandedBBoxes(ii,2)+expandedBBoxes(ii,4)-1,expandedBBoxes(ii,1):expandedBBoxes(ii,1)+expandedBBoxes(ii,3)-1,:);
+                save_gBname=[img_value '-' num2str(i) '-' num2str(ii)];
+                score=runDetectorDemo_PosNeg(gBbox,save_gBname);
+                afterClassifierIdx(1,ii)=score;
+            end
+            % 11-6 classifier前后对比
+            expandedBBoxes(find(afterClassifierIdx==0),:)=[];
+            %过滤后bbox的结果展示
+            afterClassifier=insertShape(1-skeletImg, 'Rectangle', expandedBBoxes(:,1:4),'LineWidth',1,'Color','red');
+            afterClassifierNum=size(expandedBBoxes,1);
+            if afterClassifierNum==0
+                continue
+            end
+            for ii=1:afterClassifierNum
+                text_str{ii} = num2str(ii);
+            end
+            afterClassifier = insertText(afterClassifier,expandedBBoxes(:,1:2),text_str,'FontSize',12,'BoxOpacity',0,'TextColor','red');
+            clear text_str
+            save_name=[img_value '-' num2str(i) '.bmp'];
+            imwrite(afterClassifier,save_name);
+            afterClassifierName=[img_value '-' num2str(i) '.mat'];
+            save (afterClassifierName ,'expandedBBoxes' );
         end
-        %% MSE+文本行+classify阶段结束
-        
-        %% 【8】fusion阶段：
-        %         if size(fusionBbox,1)==0
-        %             continue
-        %         end
-        %         %     [fusionBbox, fusionBboxScore]=selectStrongestBbox(fusionBbox(:,1:4),fusionBbox(:,5),'RatioType','Min','OverlapThreshold',0.85);
-        %         [fusionBbox, fusionBboxScore]=selectStrongestBbox(fusionBbox(:,1:4),fusionBbox(:,5));
-        %         fusionBbox=[fusionBbox fusionBboxScore];
-        %         fusionBboxName=[img_value '-fusion' '.mat'];
-        %         save (fusionBboxName ,'fusionBbox' );
-        %         % 分类器处理后各个阈值的结果展示
-        %         afterfusion = insertShape(g, 'Rectangle', fusionBbox(:,1:4),'LineWidth',1);
-        %         afterfusionNum=size(fusionBbox,1);
-        %         for ii=1:afterfusionNum
-        %             text_str{ii} = num2str(fusionBbox(ii,5));
-        %         end
-        %         afterfusion = insertText(afterfusion,fusionBbox(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','red');
-        %         clear text_str
-        %         save_name=[img_value '-fusion' '.bmp'];
-        %         imwrite(afterfusion,save_name);
     end %  if(~exist([img_value '-fusion.mat'], 'file'))到这里就结束了
     
-    %% 【9】segment阶段：
-    %     load([img_value '-fusion.mat']);
-    %     img_name = ['C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\' img_value '.jpg'];
-    %     g = imread(img_name);
-    %     if size(fusionBbox,1)==0
-    %         continue
-    %     end
-    %     for ii=1:size(fusionBbox,1)
-    %        %就在这里segment成单词
-    %     end
+    %% 【7】11-7 refine
     
 end
 

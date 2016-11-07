@@ -23,7 +23,7 @@ t_model.opts.nms=0;                 % set to true to enable nms
 %% 基于MSE（最稳定边缘）的文字边缘检测子
 dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\*.jpg');
 num_img = length(dir_img);
-for indexImg = 36:36
+for indexImg = 198:198
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
     % 如果fusion.mat存在，则直接进入refine阶段
