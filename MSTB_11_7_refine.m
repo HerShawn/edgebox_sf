@@ -225,8 +225,9 @@ for indexImg = 198:198
         end
     end
     end  
-    refine_handle=bar(refine_matrix(:,2)',refine_matrix(:,3)','EdgeColor','r');
-    axis([0 size(g,1) 0 max(refine_matrix(:,3))]); 
+    refine_handle=barh(refine_matrix(:,2)',refine_matrix(:,3)','EdgeColor','r');
+    axis([0 max(refine_matrix(:,3)) 0 size(g,1)]); 
+    set(gca, 'YDir','reverse');  
 end
 
 
