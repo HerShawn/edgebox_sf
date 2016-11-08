@@ -211,25 +211,22 @@ for indexImg = 216:216
     refine_matrix(:,1)=expandedBBoxes(:,1)+expandedBBoxes(:,3)/2;
     refine_matrix(:,2)=expandedBBoxes(:,2)+expandedBBoxes(:,4)/2;
     refine_matrix(:,3)=expandedBBoxes(:,4);
-    %【实现细节】横坐标不能重复
-    tbl=tabulate(refine_matrix(:,2)');
-    same_num=length( find(tbl(:,2)>1));
-    if same_num>0
-    same_table=zeros(length( find(tbl(:,2)>1)),2);
-    same_table(:,1)=tbl( find(tbl(:,2)>1),1);
-    same_table(:,2)=tbl( find(tbl(:,2)>1),2);
-    %消除重复的算法，是给相同的横坐标+0.001*j
-    for i=1:size(same_table,1)
-        refineIdx=find(refine_matrix(:,2)==same_table(i,1));
-        for j=1:same_table(i,2)
-            refine_matrix(refineIdx(j,1),2)=refine_matrix(refineIdx(j,1),2)+0.001*j;      
-        end
+       
+    %
+    axis([0 size(g,2) 0 size(g,1)]);
+    set(gca, 'YDir','reverse');
+    hold on
+    for ii=1:size(refine_matrix,1)
+        %refineX=refine_matrix(ii,1)-refine_matrix(ii,3)/2:refine_matrix(ii,1)+refine_matrix(ii,3)/2;
+        refineY=refine_matrix(ii,2)-refine_matrix(ii,3)/2:refine_matrix(ii,2)+refine_matrix(ii,3)/2;
+        refineX=refine_matrix(ii,1)*ones(1,length(refineY));
+        %refineY=refine_matrix(ii,2)*ones(1,length(refineX));
+        plot(refineX,refineY);
+        text(refine_matrix(ii,1),refine_matrix(ii,2),num2str(ii));
     end
-    end  
-    %用横向barh图画出bbox的特征表达
-    refine_handle=barh(refine_matrix(:,2)',refine_matrix(:,3)','EdgeColor','r');
-    axis([0 max(refine_matrix(:,3)) 0 size(g,1)]); 
-    set(gca, 'YDir','reverse');  
+    hold off
+    
+   
 end
 
 
