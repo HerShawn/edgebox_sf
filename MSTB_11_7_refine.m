@@ -30,13 +30,13 @@ for indexImg = 198:198
     img_value = img_value(1:end-4);
     % 如果fusion.mat存在，则直接进入refine阶段
     % 否则，从MSE,text line analysis,classifier,fusion一步一步做，直到得到fusion.mat
-    if(~exist([img_value '-' num2str(initialSfIdx(1,indexImg)) '.mat'], 'file'))
-        img_name = ['C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\' img_value '.jpg'];
-        g = imread(img_name);
+    
+    img_name = ['C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\' img_value '.jpg'];
+    g = imread(img_name);
+    if(~exist([img_value '-' num2str(initialSfIdx(1,indexImg)) '.mat'], 'file'))     
         E1=edgesDetect(g,t_model);
         E_tmp=E1;
-        %自适应的设置起始阈值分割起始
-        
+        %自适应的设置起始阈值分割起始        
         E_thresh=initialSfIdx(1,indexImg);
         E_thresh2=median(median(E1(find(E1>0))));
         E_thresh2= round(100*median(median(E1(find(E1>E_thresh2)))));
@@ -203,7 +203,30 @@ for indexImg = 198:198
     end %  if(~exist([img_value '-fusion.mat'], 'file'))到这里就结束了
     
     %% 【7】11-7 refine
-    
+    %导入分类后，refine前的bboxes
+    load([img_value '-' num2str(initialSfIdx(1,indexImg)) '.mat']);
+    %构造refine用表，refine_matrix(:,2)是横坐标，refine_matrix(:,3)是纵坐标
+    refine_matrix=zeros(size(expandedBBoxes,1),3);
+    refine_matrix(:,1)=expandedBBoxes(:,1)+expandedBBoxes(:,3)/2;
+    refine_matrix(:,2)=expandedBBoxes(:,2)+expandedBBoxes(:,4)/2;
+    refine_matrix(:,3)=expandedBBoxes(:,4);
+    %【实现细节】横坐标不能重复
+    tbl=tabulate(refine_matrix(:,2)');
+    same_num=length( find(tbl(:,2)>1));
+    if same_num>0
+    same_table=zeros(length( find(tbl(:,2)>1)),2);
+    same_table(:,1)=tbl( find(tbl(:,2)>1),1);
+    same_table(:,2)=tbl( find(tbl(:,2)>1),2);
+    %消除重复的算法，是给相同的横坐标+0.001*j
+    for i=1:size(same_table,1)
+        refineIdx=find(refine_matrix(:,2)==same_table(i,1));
+        for j=1:same_table(i,2)
+            refine_matrix(refineIdx(j,1),2)=refine_matrix(refineIdx(j,1),2)+0.001*j;      
+        end
+    end
+    end  
+    refine_handle=bar(refine_matrix(:,2)',refine_matrix(:,3)','EdgeColor','r');
+    axis([0 size(g,1) 0 max(refine_matrix(:,3))]); 
 end
 
 

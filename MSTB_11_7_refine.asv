@@ -30,13 +30,13 @@ for indexImg = 198:198
     img_value = img_value(1:end-4);
     % 如果fusion.mat存在，则直接进入refine阶段
     % 否则，从MSE,text line analysis,classifier,fusion一步一步做，直到得到fusion.mat
-    if(~exist([img_value '-' num2str(initialSfIdx(1,indexImg)) '.mat'], 'file'))
-        img_name = ['C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\' img_value '.jpg'];
-        g = imread(img_name);
+    
+    img_name = ['C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\' img_value '.jpg'];
+    g = imread(img_name);
+    if(~exist([img_value '-' num2str(initialSfIdx(1,indexImg)) '.mat'], 'file'))     
         E1=edgesDetect(g,t_model);
         E_tmp=E1;
-        %自适应的设置起始阈值分割起始
-       
+        %自适应的设置起始阈值分割起始        
         E_thresh=initialSfIdx(1,indexImg);
         E_thresh2=median(median(E1(find(E1>0))));
         E_thresh2= round(100*median(median(E1(find(E1>E_thresh2)))));
@@ -59,7 +59,7 @@ for indexImg = 198:198
             distanceImage = bwdist(~regionImage);
             skeletonImage = bwmorph(regionImage, 'thin', inf);
             %% 【2】 skelet 特征
-            skeletImg=double(skeletonImage); 
+            skeletImg=double(skeletonImage);
             % 连通区域的属性
             [L,num] = bwlabel(skeletImg,8);
             edgeStats = regionprops(L, 'BoundingBox', 'Area', ...
@@ -81,7 +81,7 @@ for indexImg = 198:198
                 continue
             end
             edgeStats(filterIdx) = [];
-            clear filterIdx      
+            clear filterIdx
             %% 【5】 1 pixel 特征
             filter_index=[];
             for ii=1:length(edgeStats)
@@ -196,14 +196,25 @@ for indexImg = 198:198
             afterClassifier = insertText(afterClassifier,expandedBBoxes(:,1:2),text_str,'FontSize',12,'BoxOpacity',0,'TextColor','red');
             clear text_str
             save_name=[img_value '-' num2str(i) '.bmp'];
-            imwrite(afterClassifier,save_name);    
+            imwrite(afterClassifier,save_name);
             afterClassifierName=[img_value '-' num2str(i) '.mat'];
             save (afterClassifierName ,'expandedBBoxes' );
-        end  
-    end %  if(~exist([img_value '-fusion.mat'], 'file'))到这里就结束了  
+        end
+    end %  if(~exist([img_value '-fusion.mat'], 'file'))到这里就结束了
     
-    %% 【6】CNN分类器
-    
+    %% 【7】11-7 refine
+    load([img_value '-' num2str(initialSfIdx(1,indexImg)) '.mat']);
+    refine_matrix=zeros(size(expandedBBoxes,1),3);
+    refine_matrix(:,1)=expandedBBoxes(:,1)+expandedBBoxes(:,3)/2;
+    refine_matrix(:,2)=expandedBBoxes(:,2)+expandedBBoxes(:,4)/2;
+    refine_matrix(:,3)=expandedBBoxes(:,4);
+    tbl=tabulate(refine_matrix(:,2)');
+    same_num=length( find(tbl(:,2)>1));
+    if same_num>0
+    same_table=zeros(length( find(tbl(:,2)>1)),2);
+    end
+    refine_handle=bar(refine_matrix(:,2)',refine_matrix(:,3)');
+    axis([0 size(g,1) 0 max(refine_matrix(:,3))]); 
 end
 
 
