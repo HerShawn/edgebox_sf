@@ -8,6 +8,7 @@
 /detectorDemo/*
 /finetune/*
 /model_release/*
+/export_fig/*
 
 *.jpg
 *.txt

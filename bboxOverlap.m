@@ -43,7 +43,7 @@ for m = 1:size(bboxA,1)
     
         if min(abs(y1BboxA(m)-y2BboxA(m)),abs(y1BboxB(n)-y2BboxB(n)))/max(abs(y1BboxA(m)-y2BboxA(m)),abs(y1BboxB(n)-y2BboxB(n)))>0.65 
              %【3】一对bbox之间位置不能太偏移
-            if  abs(max(y1BboxA(m),y1BboxB(n))-min(y2BboxA(m),y2BboxB(n)))/max(abs(y1BboxA(m)-y2BboxA(m)),abs(y1BboxB(n)-y2BboxB(n)))>0.33
+            if  abs(max(y1BboxA(m),y1BboxB(n))-min(y2BboxA(m),y2BboxB(n)))/max(abs(y1BboxA(m)-y2BboxA(m)),abs(y1BboxB(n)-y2BboxB(n)))>0.35
                 intersectAB = w * h;       
                 overlapRatio(m,n) = intersectAB/(areaA(m)+areaB(n)-intersectAB);
             end

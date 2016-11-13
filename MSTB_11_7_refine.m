@@ -24,8 +24,11 @@ t_model.opts.nms=0;                 % set to true to enable nms
 dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_Images\*.jpg');
 num_img = length(dir_img);
 load('initialSfIdx');
+lineIdx=[];
+planeIdx=[];
 
-for indexImg = 216:216
+for indexImg = 1:63
+ 
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
     % 如果fusion.mat存在，则直接进入refine阶段
@@ -40,8 +43,8 @@ for indexImg = 216:216
     E_thresh2=median(median(E1(find(E1>0))));
     E_thresh2= round(100*median(median(E1(find(E1>E_thresh2)))));
     E_thresh=max(E_thresh,E_thresh2);
-    if(~exist([img_value '-' num2str(E_thresh+10) '.mat'], 'file'))     
-      
+    if(~exist([img_value '-' num2str(E_thresh) '.mat'], 'file'))     
+           continue
         %% 【1】边缘稳定性
         % fusion各个阈值中的bbox，用(NMS,overlap,0.5)
         fusionBbox=[];
@@ -205,7 +208,7 @@ for indexImg = 216:216
     
     %% 【7】11-7 refine
     %导入分类后，refine前的bboxes
-    load([img_value '-' num2str(E_thresh+10) '.mat']);
+    load([img_value '-' num2str(E_thresh) '.mat']);
     %构造refine用表，refine_matrix(:,2)是横坐标，refine_matrix(:,3)是纵坐标
     refine_matrix=zeros(size(expandedBBoxes,1),3);
     refine_matrix(:,1)=expandedBBoxes(:,1)+expandedBBoxes(:,3)/2;
@@ -230,6 +233,8 @@ for indexImg = 216:216
     refine_handle=barh(refine_matrix(:,2)',refine_matrix(:,3)','EdgeColor','r');
     axis([0 max(refine_matrix(:,3)) 0 size(g,1)]); 
     set(gca, 'YDir','reverse');  
+    saveas(gcf,[img_value '-' num2str(E_thresh) '-line.bmp'])
+    close all;
 end
 
 

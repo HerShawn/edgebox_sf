@@ -25,7 +25,7 @@ dir_img = dir('C:\Users\Administrator\Desktop\制作数据集\Challenge2_Test_Task12_
 num_img = length(dir_img);
 load('initialSfIdx');
 
-for indexImg = 216:216
+for indexImg = 1:63
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
     % 如果fusion.mat存在，则直接进入refine阶段
@@ -40,8 +40,8 @@ for indexImg = 216:216
     E_thresh2=median(median(E1(find(E1>0))));
     E_thresh2= round(100*median(median(E1(find(E1>E_thresh2)))));
     E_thresh=max(E_thresh,E_thresh2);
-    if(~exist([img_value '-' num2str(E_thresh+10) '.mat'], 'file'))     
-      
+    if(~exist([img_value '-' num2str(E_thresh) '.mat'], 'file'))
+        continue
         %% 【1】边缘稳定性
         % fusion各个阈值中的bbox，用(NMS,overlap,0.5)
         fusionBbox=[];
@@ -205,28 +205,28 @@ for indexImg = 216:216
     
     %% 【7】11-7 refine
     %导入分类后，refine前的bboxes
-    load([img_value '-' num2str(E_thresh+10) '.mat']);
-    %构造refine用表，refine_matrix(:,2)是横坐标，refine_matrix(:,3)是纵坐标
+    load([img_value '-' num2str(E_thresh) '.mat']);
+    %构造refine用表，包含4项重要信息：bbox序号，bbox中心点的横、纵坐标，bbox的高度（可作为与别的bbox进行匹配的一种特征）
     refine_matrix=zeros(size(expandedBBoxes,1),3);
     refine_matrix(:,1)=expandedBBoxes(:,1)+expandedBBoxes(:,3)/2;
     refine_matrix(:,2)=expandedBBoxes(:,2)+expandedBBoxes(:,4)/2;
     refine_matrix(:,3)=expandedBBoxes(:,4);
-       
-    %
+    %refine_matrix的可视化，将4项重要信息都表现出来
     axis([0 size(g,2) 0 size(g,1)]);
+    %     axis equal;
     set(gca, 'YDir','reverse');
+    set(gca, 'XAxisLocation','top');
     hold on
+    grid minor
     for ii=1:size(refine_matrix,1)
-        %refineX=refine_matrix(ii,1)-refine_matrix(ii,3)/2:refine_matrix(ii,1)+refine_matrix(ii,3)/2;
         refineY=refine_matrix(ii,2)-refine_matrix(ii,3)/2:refine_matrix(ii,2)+refine_matrix(ii,3)/2;
         refineX=refine_matrix(ii,1)*ones(1,length(refineY));
-        %refineY=refine_matrix(ii,2)*ones(1,length(refineX));
         plot(refineX,refineY);
         text(refine_matrix(ii,1),refine_matrix(ii,2),num2str(ii));
     end
     hold off
-    
-   
+    saveas(gcf,[img_value '-' num2str(E_thresh) '-plane.bmp']);
+    close all
 end
 
 
