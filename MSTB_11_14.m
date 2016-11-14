@@ -26,7 +26,7 @@ num_img = length(dir_img);
 load('initialSfIdx');
 eIdx=[];
 e10Idx=[];
-for indexImg = 36:36
+for indexImg = 1:num_img
     fusionBBox=[];
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -69,38 +69,38 @@ for indexImg = 36:36
     ymax = min(ymax, size(g,1));
     expandedBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1];
     % bbox作为结点，邻接关系作为边，建图
-    %（1）将bbox构成文本行组的两个限制：height之比、偏移量
     overlapRatio = bboxOverlap(expandedBBoxes, expandedBBoxes);
     n = size(overlapRatio,1);
     overlapRatio(1:n+1:n^2) = 0;
     gh = graph(overlapRatio);
     % 在图中找出连通的文本区域
     componentIndices = conncomp(gh);
-    % 构造refine用表：bbox序号，bbox中心点的横、纵坐标，bbox的高度
-    refine_matrix=zeros(size(fusionBBox,1),3);
-    refine_matrix(:,1)=fusionBBox(:,1)+fusionBBox(:,3)/2;
-    refine_matrix(:,2)=fusionBBox(:,2)+fusionBBox(:,4)/2;
-    refine_matrix(:,3)=fusionBBox(:,4);
-    % （2）组内部的融合：height中值、方向线
-    axis([0 size(g,2) 0 size(g,1)]);
-    set(gca, 'YDir','reverse');
-    hold on
-    for i=1:max(componentIndices)
-        txtGroup=find(componentIndices==i);
-        for j=1:size(txtGroup,2)
-            HY=refine_matrix(j,2)-refine_matrix(j,3)/2:refine_matrix(j,2)+refine_matrix(txtGroup,3)/2;
-            HX=refine_matrix(txtGroup,1)*ones(1,length( HY));
-            plot(HX,HY);
-        end
-        LY=refine_matrix(txtGroup,2);
-        LX=refine_matrix(txtGroup,1);
-        plot(LX,LY,'-ro',...
-            'LineWidth',1,...
-            'MarkerSize',3,...
-            'MarkerFaceColor',[0.5,0.5,0.5]);
-    end
-    hold off
     
+    %求每个textBBoxes里有多少bboxes，作为该textBBoxes的权值
+    textBBoxesNum=max(componentIndices);
+    textBBoxesWeight=ones(textBBoxesNum,1);
+    for ii=1:textBBoxesNum
+        textBBoxesWeight(ii,1)=length(find(componentIndices==ii));
+    end
+    
+    % 生成文本行
+    xmin = accumarray(componentIndices', xmin, [], @min);
+    ymin = accumarray(componentIndices', ymin, [], @min);
+    xmax = accumarray(componentIndices', xmax, [], @max);
+    ymax = accumarray(componentIndices', ymax, [], @max);
+    textBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1 textBBoxesWeight];
+    
+    [textBBoxes,~,~] = selectStrongestBbox(textBBoxes(:,1:4),textBBoxesWeight,'RatioType','Min','OverlapThreshold',0.8);
+    
+    aftertext = insertShape(g, 'Rectangle', textBBoxes(:,1:4),'LineWidth',1);
+    aftertextNum=size(textBBoxes,1);
+    for ii=1:aftertextNum
+        text_str{ii} = num2str(ii);
+    end
+    aftertext = insertText(aftertext,textBBoxes(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','red');
+    clear text_str
+    save_name=[img_value '-inter' '.bmp'];
+    imwrite(aftertext,save_name);
 end
 
 
