@@ -26,7 +26,7 @@ num_img = length(dir_img);
 load('initialSfIdx');
 eIdx=[];
 e10Idx=[];
-for indexImg = 1:num_img
+for indexImg = 36:36
     fusionBBox=[];
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -57,6 +57,7 @@ for indexImg = 1:num_img
         continue
     end
     %% 【2】文本行提取、验证、分割
+    %【2.1】文本行初步构建成组
     % 从 [x y width height] 到 [xmin ymin xmax ymax]
     xmin = fusionBBox(:,1);
     ymin = fusionBBox(:,2);
@@ -81,12 +82,21 @@ for indexImg = 1:num_img
     refine_matrix(:,1)=fusionBBox(:,1)+fusionBBox(:,3)/2;
     refine_matrix(:,2)=fusionBBox(:,2)+fusionBBox(:,4)/2;
     refine_matrix(:,3)=fusionBBox(:,4);
-    % （2）组内部的融合：height中值、方向线
+    % 【2.2】intra:组内异常值的排除
     axis([0 size(g,2) 0 size(g,1)]);
     set(gca, 'YDir','reverse');
     hold on
+    intra_matrix=[];
     for i=1:max(componentIndices)
         txtGroup=find(componentIndices==i);
+        %11-15：对txtGroup按横坐标重排序
+        [~,I]=sort(refine_matrix(txtGroup,1));
+        txtGroup=txtGroup(I);
+        %
+        %11-15-2: 在intra里发现异常值 : 角度、偏移、H之比
+        intra_set=zeros(size(txtGroup,2),4);
+        intra_set(1,1)=i;
+        %
         for ii=1:size(txtGroup,2)
             j=txtGroup(1,ii);
             HY=refine_matrix(j,2)-refine_matrix(j,3)/2:refine_matrix(j,2)+refine_matrix(j,3)/2;
@@ -95,13 +105,40 @@ for indexImg = 1:num_img
             if ii>1
                 LY=[refine_matrix(txtGroup(1,ii-1),2) refine_matrix(j,2)];
                 LX=[refine_matrix(txtGroup(1,ii-1),1) refine_matrix(j,1)];
+                %11-15-2: 在intra里发现异常值 : 角度、偏移、H之比
+                %重复值会造成干扰，去掉重复值
+                if( LX(2)-LX(1)<2.5)
+                    continue
+                end
+                %（1）第几组
+                intra_set(ii,1)=i;
+                %（2）角度
+                intra_set(ii,2)=(LY(2)-LY(1))/(LX(2)-LX(1));
+                yTop=max(LY(1)-refine_matrix(txtGroup(1,ii-1),3)/2,LY(2)-refine_matrix(j,3)/2);
+                yBottom=min(LY(1)+refine_matrix(txtGroup(1,ii-1),3)/2,LY(2)+refine_matrix(j,3)/2);
+                yH=max(refine_matrix(txtGroup(1,ii-1),3),refine_matrix(j,3));
+                %（3）偏移量
+                intra_set(ii,3)=abs(yBottom-yTop)/yH;
+                %（4）H之比
+                intra_set(ii,4)=min(refine_matrix(txtGroup(1,ii-1),3),refine_matrix(j,3))/yH;
+                %
                 plot(LX,LY,'-o',...
                     'LineWidth',0.5,...
                     'MarkerSize',2,...
                     'MarkerEdgeColor','b');
             end
             HY=[]; HX=[]; LY=[]; LX=[];
-         end
+        end
+        figure(2);
+        title();
+        subplot(3,1,1);
+        barX=1:size(txtGroup,2);
+        bar(barX,intra_set(:,2)');
+        subplot(3,1,2);
+        bar(barX,intra_set(:,3)');
+        subplot(3,1,3);
+        bar(barX,intra_set(:,4)');
+        intra_matrix=[ intra_matrix ; intra_set];
     end
     hold off
     saveas(gcf,[img_value  '-intra.bmp']);
