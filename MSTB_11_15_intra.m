@@ -26,7 +26,7 @@ num_img = length(dir_img);
 load('initialSfIdx');
 eIdx=[];
 e10Idx=[];
-for indexImg = 145:145
+for indexImg = 36:36
     fusionBBox=[];
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -87,19 +87,26 @@ for indexImg = 145:145
     hold on
     for i=1:max(componentIndices)
         txtGroup=find(componentIndices==i);
+        
+        %11-15：对txtGroup按横坐标重排序
+        [~,I]=sort(refine_matrix(txtGroup,1));
+        txtGroup=txtGroup(I);
+        %
         for ii=1:size(txtGroup,2)
             j=txtGroup(1,ii);
             HY=refine_matrix(j,2)-refine_matrix(j,3)/2:refine_matrix(j,2)+refine_matrix(j,3)/2;
             HX=refine_matrix(j,1)*ones(1,length( HY));
             plot(HX,HY);
-        end
-        LY=refine_matrix(txtGroup,2);
-        LX=refine_matrix(txtGroup,1);
-        plot(LX,LY,'-ro',...
-            'LineWidth',0.5,...
-            'MarkerSize',2,...
-            'MarkerEdgeColor','b');
-        HY=[]; HX=[]; LY=[]; LX=[];
+            if ii>1
+                LY=[refine_matrix(txtGroup(1,ii-1),2) refine_matrix(j,2)];
+                LX=[refine_matrix(txtGroup(1,ii-1),1) refine_matrix(j,1)];
+                plot(LX,LY,'-o',...
+                    'LineWidth',0.5,...
+                    'MarkerSize',2,...
+                    'MarkerEdgeColor','b');
+            end
+            HY=[]; HX=[]; LY=[]; LX=[];
+         end
     end
     hold off
     saveas(gcf,[img_value  '-intra.bmp']);

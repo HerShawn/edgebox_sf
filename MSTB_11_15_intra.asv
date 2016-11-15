@@ -87,6 +87,10 @@ for indexImg = 36:36
     hold on
     for i=1:max(componentIndices)
         txtGroup=find(componentIndices==i);
+        
+        %11-15：对txtGroup按横坐标重排序
+        
+        %
         for ii=1:size(txtGroup,2)
             j=txtGroup(1,ii);
             HY=refine_matrix(j,2)-refine_matrix(j,3)/2:refine_matrix(j,2)+refine_matrix(j,3)/2;
