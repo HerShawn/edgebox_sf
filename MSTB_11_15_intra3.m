@@ -95,7 +95,7 @@ for indexImg = 1:num_img
         txtGroup=txtGroup(I);
         %
         %11-15-2: 在intra里发现异常值 : 角度、偏移、H之比
-        intra_set=zeros(size(txtGroup,2),4);
+        intra_set=zeros(size(txtGroup,2),5);
         intra_set(1,1)=i;
         %
         for ii=1:size(txtGroup,2)
@@ -107,21 +107,20 @@ for indexImg = 1:num_img
                 LY=[refine_matrix(txtGroup(1,ii-1),2) refine_matrix(j,2)];
                 LX=[refine_matrix(txtGroup(1,ii-1),1) refine_matrix(j,1)];
                 %11-15-2: 在intra里发现异常值 : 角度、偏移、H之比
-                %重复值会造成干扰，去掉重复值
-                if( LX(2)-LX(1)<2.5)
-                    continue
-                end
                 %（1）第几组
                 intra_set(ii,1)=i;
-                %（2）角度
-                intra_set(ii,2)=(LY(2)-LY(1))/(LX(2)-LX(1));
+                %（2）横坐标间距离
+                intra_set(ii,2)=LX(2)-LX(1);
+                %intra_set(ii,2)=sqrt((LX(2)-LX(1)).^2+(LY(2)-LY(1)).^2);
+                %（3）角度
+                intra_set(ii,3)=(LY(2)-LY(1))/(LX(2)-LX(1));
+                %（4）偏移量
                 yTop=max(LY(1)-refine_matrix(txtGroup(1,ii-1),3)/2,LY(2)-refine_matrix(j,3)/2);
                 yBottom=min(LY(1)+refine_matrix(txtGroup(1,ii-1),3)/2,LY(2)+refine_matrix(j,3)/2);
                 yH=max(refine_matrix(txtGroup(1,ii-1),3),refine_matrix(j,3));
-                %（3）偏移量
-                intra_set(ii,3)=abs(yBottom-yTop)/yH;
-                %（4）H之比
-                intra_set(ii,4)=min(refine_matrix(txtGroup(1,ii-1),3),refine_matrix(j,3))/yH;
+                intra_set(ii,4)=abs(yBottom-yTop)/yH;
+                %（5）H之比
+                intra_set(ii,5)=min(refine_matrix(txtGroup(1,ii-1),3),refine_matrix(j,3))/yH;
                 %
                 plot(LX,LY,'-o',...
                     'LineWidth',0.5,...
@@ -130,17 +129,30 @@ for indexImg = 1:num_img
             end
             HY=[]; HX=[]; LY=[]; LX=[];
         end
+        %重复值会造成干扰，去掉重复值
+        
+        if (isempty(find(intra_set(:,2)>10)))
+            removeIdx=(1:size(intra_set,1))';
+        else
+            removeIdx=find(intra_set(:,2)<median(intra_set(intra_set(:,2)>10,2))/2);
+        end
+        
+        intra_set(removeIdx,1)=i;
+        intra_set(removeIdx,2)=0;intra_set(removeIdx,3)=0;intra_set(removeIdx,4)=0;intra_set(removeIdx,5)=0;
         intraH=figure(2);
         set(intraH,'name',['第' num2str(i) '组'],'Numbertitle','off');
-        subplot(3,1,1);
+        subplot(4,1,1);
         barX=1:size(txtGroup,2);
         bar(barX,intra_set(:,2)');
-        title('角度');
-        subplot(3,1,2);
+        title('距离');
+        subplot(4,1,2);
         bar(barX,intra_set(:,3)');
-        title('偏移量');
-        subplot(3,1,3);
+        title('角度');
+        subplot(4,1,3);
         bar(barX,intra_set(:,4)');
+        title('偏移量');
+        subplot(4,1,4);
+        bar(barX,intra_set(:,5)');
         title('H之比');
         intra_matrix=[ intra_matrix ; intra_set];
         close figure 2
@@ -149,15 +161,18 @@ for indexImg = 1:num_img
     close figure 1
     intraAll=figure(3);
     set(intraAll,'name',img_value,'Numbertitle','off');
-    subplot(3,1,1);
+    subplot(4,1,1);
     barX=1:size(intra_matrix,1);
     bar(barX,intra_matrix(:,2)');
-    title('角度');
-    subplot(3,1,2);
+    title('距离');
+    subplot(4,1,2);
     bar(barX,intra_matrix(:,3)');
-    title('偏移量');
-    subplot(3,1,3);
+    title('角度');
+    subplot(4,1,3);
     bar(barX,intra_matrix(:,4)');
+    title('偏移量');
+    subplot(4,1,4);
+    bar(barX,intra_matrix(:,5)');
     title('H之比');
     saveas(gcf,[img_value  '-info.bmp']);
     close all
