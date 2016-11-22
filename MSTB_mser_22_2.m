@@ -1,5 +1,4 @@
 
-
 function MSTB_mser_22_2(g,textBBoxes,img_value)
 textBBoxesNum=size(textBBoxes,1);
 for ii=1:textBBoxesNum
@@ -35,12 +34,7 @@ for ii=1:textBBoxesNum
     if isempty(bboxes)
         return
     end
-    
-    beforemserBBoxes = insertShape(img, 'Rectangle', bboxes,'LineWidth',1);
-    save_name=[img_value '-beforemser-' num2str(ii) '-' num2str(textBBoxes(ii,5)) '.bmp'];
-    imwrite(beforemserBBoxes,save_name);
-    
-    [mserBBoxes, ~]=selectStrongestBbox(bboxes(:,1:4),bboxes(:,3).*bboxes(:,4));
+    [mserBBoxes, ~]=selectStrongestBbox(bboxes(:,1:4),bboxes(:,3).*bboxes(:,4),'RatioType','Min','OverlapThreshold',0.9);
     aftermserBBoxes = insertShape(img, 'Rectangle', mserBBoxes,'LineWidth',1);
     mserBBoxesNum=size(mserBBoxes,1);
     for kk=1:mserBBoxesNum
@@ -48,7 +42,14 @@ for ii=1:textBBoxesNum
     end
     aftertext= insertText(aftermserBBoxes,mserBBoxes(:,1:2),text_str,'FontSize',12,'BoxOpacity',0,'TextColor','red');
     clear text_str
-    save_name=[img_value '-mser-' num2str(ii) '-' num2str(textBBoxes(ii,5)) '.bmp'];
+    if textBBoxes(ii,5)==1
+        className='false';
+    elseif textBBoxes(ii,5)==2
+        className='weak';
+    else
+         className='strong';
+    end
+    save_name=[img_value '(' num2str(ii) ')' '-' className '(' num2str(mserBBoxesNum) ')' '.bmp'];
     imwrite(aftertext,save_name);
 end
 end
