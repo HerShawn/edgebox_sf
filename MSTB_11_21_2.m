@@ -26,7 +26,6 @@ num_img = length(dir_img);
 load('initialSfIdx');
 eIdx=[];
 e10Idx=[];
-txtBBoxesCnt=[];
 for indexImg = 1:num_img
     fusionBBox=[];
     img_value = dir_img(indexImg).name;
@@ -89,37 +88,15 @@ for indexImg = 1:num_img
     ymin = accumarray(componentIndices', ymin, [], @min);
     xmax = accumarray(componentIndices', xmax, [], @max);
     ymax = accumarray(componentIndices', ymax, [], @max);
-    %去掉只有一个bbox的文本行
-    txtBBoxCnt=zeros(1,4);
-    txtBBoxCnt(1,1)=str2double(img_value(5:end));
-    txtBBoxCnt(1,2)=length(find(textBBoxesWeight==1));
-    txtBBoxCnt(1,3)=length(find(textBBoxesWeight==2));
-    txtBBoxCnt(1,4)=length(find(textBBoxesWeight>2));  
-    txtBBoxesCnt=[txtBBoxesCnt;txtBBoxCnt];
-    %     if  length(find(textBBoxesWeight<3))/textBBoxesNum>0.5 && textBBoxesNum>4
-    %         xmin=xmin(textBBoxesWeight>2);
-    %         ymin=ymin(textBBoxesWeight>2);
-    %         xmax=xmax(textBBoxesWeight>2);
-    %         ymax=ymax(textBBoxesWeight>2);
-    %         textBBoxesWeight=textBBoxesWeight(textBBoxesWeight>2);
-    %     end
-    textBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1 textBBoxesWeight];   
-    %【2.2】inter 组间NMS掉bbox较少的文本行
-    [textBBoxes,~,~] = selectStrongestBbox(textBBoxes(:,1:4),textBBoxesWeight,'RatioType','Min','OverlapThreshold',0.9);
-    aftertext = insertShape(g, 'Rectangle', textBBoxes(:,1:4),'LineWidth',1);
+    textBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1 textBBoxesWeight];
     aftertextNum=size(textBBoxes,1);
     if aftertextNum==0
         img_value
         continue
     end
-    for ii=1:aftertextNum
-        text_str{ii} = num2str(ii);
-    end
-    aftertext = insertText(aftertext,textBBoxes(:,1:2),text_str,'FontSize',12,'BoxColor','red','BoxOpacity',0,'TextColor','red');
-    clear text_str
-    save_name=[img_value '-txt' '.bmp'];
-    imwrite(aftertext,save_name);
+    MSTB_mser_21(g,textBBoxes,img_value);
+    MSTB_mser_21_2(g,textBBoxes,img_value);
 end
-save('txtBBoxesCnt.mat','txtBBoxesCnt');
+
 
 

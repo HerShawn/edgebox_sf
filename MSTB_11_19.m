@@ -96,14 +96,14 @@ for indexImg = 1:num_img
     txtBBoxCnt(1,3)=length(find(textBBoxesWeight==2));
     txtBBoxCnt(1,4)=length(find(textBBoxesWeight>2));  
     txtBBoxesCnt=[txtBBoxesCnt;txtBBoxCnt];
-    %     if  length(find(textBBoxesWeight<3))/textBBoxesNum>0.5 && textBBoxesNum>4
-    %         xmin=xmin(textBBoxesWeight>2);
-    %         ymin=ymin(textBBoxesWeight>2);
-    %         xmax=xmax(textBBoxesWeight>2);
-    %         ymax=ymax(textBBoxesWeight>2);
-    %         textBBoxesWeight=textBBoxesWeight(textBBoxesWeight>2);
-    %     end
-    textBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1 textBBoxesWeight];   
+    if  length(find(textBBoxesWeight<3))/textBBoxesNum>0.5 && textBBoxesNum>4
+        xmin=xmin(textBBoxesWeight>2);
+        ymin=ymin(textBBoxesWeight>2);
+        xmax=xmax(textBBoxesWeight>2);
+        ymax=ymax(textBBoxesWeight>2);
+        textBBoxesWeight=textBBoxesWeight(textBBoxesWeight>2);
+    end
+    textBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1 textBBoxesWeight];
     %【2.2】inter 组间NMS掉bbox较少的文本行
     [textBBoxes,~,~] = selectStrongestBbox(textBBoxes(:,1:4),textBBoxesWeight,'RatioType','Min','OverlapThreshold',0.9);
     aftertext = insertShape(g, 'Rectangle', textBBoxes(:,1:4),'LineWidth',1);
