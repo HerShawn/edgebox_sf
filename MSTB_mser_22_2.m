@@ -4,8 +4,9 @@ textBBoxesNum=size(textBBoxes,1);
 for ii=1:textBBoxesNum
     gBbox=g(textBBoxes(ii,2):textBBoxes(ii,2)+textBBoxes(ii,4)-1,textBBoxes(ii,1):textBBoxes(ii,1)+textBBoxes(ii,3)-1,:);
     img = rgb2gray(gBbox);
-    maxArea=ceil(size(img,1)*size(img,1));
+    maxArea=ceil(size(img,1)*size(img,1)/2);
     minArea=round(maxArea/25);
+        %     minArea=ceil(size(img,1)*size(img,1)/25);
     bboxes=[];
     % 为提高mser检出率，将阈值从1到10递增（以后试下多通道的方式）
     for jj=1:10

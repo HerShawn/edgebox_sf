@@ -1,4 +1,4 @@
-
+%% ·µ»ØMSERµÄbboxes
 function bboxes=MSTB_mser_22(img)
 img = rgb2gray(img);
 maxArea=round(size(img,1)*size(img,2)*0.2);

@@ -26,7 +26,7 @@ num_img = length(dir_img);
 load('initialSfIdx');
 eIdx=[];
 e10Idx=[];
-for indexImg = 130:130
+for indexImg = 1:num_img
     fusionBBox=[];
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -80,6 +80,7 @@ for indexImg = 130:130
     %求每个textBBoxes里有多少bboxes，作为该textBBoxes的权值
     textBBoxesNum=max(componentIndices);
     textBBoxesWeight=ones(textBBoxesNum,1);
+    mserNum=zeros(textBBoxesNum,1);
     for ii=1:textBBoxesNum
         textBBoxesWeight(ii,1)=length(find(componentIndices==ii));
     end
@@ -88,14 +89,14 @@ for indexImg = 130:130
     ymin = accumarray(componentIndices', ymin, [], @min);
     xmax = accumarray(componentIndices', xmax, [], @max);
     ymax = accumarray(componentIndices', ymax, [], @max);
-    textBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1 textBBoxesWeight];
+    textBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1 textBBoxesWeight mserNum];
     aftertextNum=size(textBBoxes,1);
     if aftertextNum==0
         img_value
         continue
     end
-    MSTB_mser_22_2(g,textBBoxes,img_value);  
-    MstbMserOverlapRatio=MstbMserOverlap(textBBoxes,MSTB_mser_bboxes);  
+    %形态学；每个bboxes里再求mser
+    MSTB_mser_25(g,textBBoxes,img_value);  
 end
 
 

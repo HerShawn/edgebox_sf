@@ -1,4 +1,4 @@
-
+%% ÕûÍ¼mser£»±Ê»®¿í¶È£»strong¡¢weak¡¢false£»
 function MSTB_mser_21_2(img,textBBoxes,img_value)
 img = rgb2gray(img);
 maxArea=round(size(img,1)*size(img,2)*0.2);
