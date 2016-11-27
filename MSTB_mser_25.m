@@ -21,7 +21,7 @@ for ii=1:textBBoxesNum
         w = bbox(:,3);
         h = bbox(:,4);
         aspectRatio = w./h;
-        filterIdx = aspectRatio' > 1;
+        filterIdx = aspectRatio' > 1.5;
         filterIdx = filterIdx | [mserStats.Eccentricity] > .995 ;
         filterIdx = filterIdx | [mserStats.Solidity] < .3;
         filterIdx = filterIdx | [mserStats.Extent] < 0.2 | [mserStats.Extent] > 0.9;
@@ -42,7 +42,31 @@ for ii=1:textBBoxesNum
     mserBBoxes=[mserBBoxes; [ mserBBoxe mserIdx]];
     textBBoxes(ii,6)=mserBBoxesNum;
 end
+if isempty(mserBBoxes)
+    return
+end
+%2016-11-27 : weak、false类bboxes中，H或W占太满的mser要删去
+for ii=1:textBBoxesNum
+    %strong类bboxes不考虑
+    if textBBoxes(ii,5)>2
+        continue
+    end
+    %该bboxes的宽、高  
+    textW=textBBoxes(ii,3);
+    textH=textBBoxes(ii,4);
+    %该bboxes中mser的起始索引
+    initialIdx=min(find(mserBBoxes(:,5)==ii));
+    %weak、false类bboxes中，H或W占太满的mser要删去
+    diffW=textW-mserBBoxes(mserBBoxes(:,5)==ii,3)<2;
+    diffH=textH-mserBBoxes(mserBBoxes(:,5)==ii,4)<2;
+    if ~isempty(unique([find(diffW);find(diffH)]))
+        removeMserIdx=unique([find(diffW);find(diffH)])+initialIdx-1;
+        mserBBoxes(removeMserIdx,:)=[];
+    end
+end
+textBBoxes(setdiff(1:20,(unique(mserBBoxes(:,end)))'),5)=0;
 aftertext = insertShape(g, 'Rectangle', mserBBoxes(:,1:4),'LineWidth',1,'Color','cyan');
+aftertext = insertShape(aftertext, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==0),1:4),'LineWidth',3,'Color','black');
 aftertext = insertShape(aftertext, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==1),1:4),'LineWidth',3,'Color','red');
 aftertext = insertShape(aftertext, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==2),1:4),'LineWidth',3,'Color','yellow');
 aftertext = insertShape(aftertext, 'Rectangle', textBBoxes( find(textBBoxes(:,5)>2),1:4),'LineWidth',3,'Color','green');
