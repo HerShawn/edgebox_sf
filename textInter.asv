@@ -1,13 +1,13 @@
 function textInter(g,img_value,textBBoxes,mserBBoxes)
-textBBoxes=textBBoxes(textBBoxes(:,5)>0,:);
-[interBBoxes,interBBoxeScore,interBBoxesIdx]=selectStrongestBbox(textBBoxes(:,1:4),textBBoxes(:,5)+textBBoxes(:,6),'RatioType','Min','OverlapThreshold',0.9);
+textBBoxes=textBBoxes(textBBoxes(:,5)>0);
+[interBBoxes,interBBoxeScore,interBBoxesIdx]=selectStrongestBbox(textBBoxes(:,1:4),textBBoxes(:,5)+textBBoxes(textIdx,6),'RatioType','Min','OverlapThreshold',0.9);
 for ii=1:size(interBBoxes,1)
     if ii>1
         g=aftertext;
     end
-    if textBBoxes(interBBoxesIdx(ii),5)==1
+    if textBBoxes(ii,5)==1
         aftertext = insertShape(g, 'Rectangle', interBBoxes(ii,:),'LineWidth',3,'Color','red');
-    elseif textBBoxes(interBBoxesIdx(ii),5)==2
+    elseif textBBoxes(ii,5)==2
         aftertext = insertShape(g, 'Rectangle', interBBoxes(ii,:),'LineWidth',3,'Color','yellow');
     else
         aftertext = insertShape(g, 'Rectangle', interBBoxes(ii,:),'LineWidth',3,'Color','green');
