@@ -26,7 +26,7 @@ num_img = length(dir_img);
 load('initialSfIdx');
 eIdx=[];
 e10Idx=[];
-for indexImg = 59:59
+for indexImg = 233:233
     fusionBBox=[];
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -96,7 +96,7 @@ for indexImg = 59:59
         continue
     end
     %形态学；每个bboxes里再求mser
-    MSTB_mser_25(g,textBBoxes,img_value);  
+    [mserBBoxes,textBBoxes]=MSTB_mser_25(g,textBBoxes,img_value);  
 end
 
 

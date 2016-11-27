@@ -1,5 +1,5 @@
 
-function MSTB_mser_25(g,textBBoxes,img_value)
+function [mserBBoxes,textBBoxes]=MSTB_mser_25(g,textBBoxes,img_value)
 textBBoxesNum=size(textBBoxes,1);
 mserBBoxes=[];
 for ii=1:textBBoxesNum
@@ -64,7 +64,13 @@ for ii=1:textBBoxesNum
         mserBBoxes(removeMserIdx,:)=[];
     end
 end
-textBBoxes(setdiff(1:20,(unique(mserBBoxes(:,end)))'),5)=0;
+% textBBoxes(setdiff(1:textBBoxesNum,(unique(mserBBoxes(:,end)))'),5)=0;
+if length( find( textBBoxes(:,5)==1))<textBBoxesNum
+    removeIdx=setdiff(1:textBBoxesNum,(unique(mserBBoxes(:,end)))');
+    leaveBBoxeIdx= find(textBBoxes(removeIdx,5)==1);
+    textBBoxes(removeIdx(leaveBBoxeIdx),5)=0;
+else
+end
 aftertext = insertShape(g, 'Rectangle', mserBBoxes(:,1:4),'LineWidth',1,'Color','cyan');
 aftertext = insertShape(aftertext, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==0),1:4),'LineWidth',3,'Color','black');
 aftertext = insertShape(aftertext, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==1),1:4),'LineWidth',3,'Color','red');
