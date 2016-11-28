@@ -98,7 +98,7 @@ for indexImg = 1:num_img
     %形态学；每个bboxes里再求mser
     [mserBBoxes,textBBoxes]=MSTB_mser_25(g,textBBoxes,img_value);  
     %2016-11-27:inter：text组间去除冗余（有等级 green、yellow、red）
-    textInter(g,img_value,textBBoxes,mserBBoxes);
+    [mserBBoxes,textBBoxes]=textInter_2(g,img_value,textBBoxes,mserBBoxes);
 end
 
 

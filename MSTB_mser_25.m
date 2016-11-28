@@ -71,17 +71,17 @@ if length( find( textBBoxes(:,5)==1))<textBBoxesNum
     textBBoxes(removeIdx(leaveBBoxeIdx),5)=0;
 else
 end
-aftertext = insertShape(g, 'Rectangle', mserBBoxes(:,1:4),'LineWidth',1,'Color','cyan');
-aftertext = insertShape(aftertext, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==0),1:4),'LineWidth',3,'Color','black');
-aftertext = insertShape(aftertext, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==1),1:4),'LineWidth',3,'Color','red');
-aftertext = insertShape(aftertext, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==2),1:4),'LineWidth',3,'Color','yellow');
-aftertext = insertShape(aftertext, 'Rectangle', textBBoxes( find(textBBoxes(:,5)>2),1:4),'LineWidth',3,'Color','green');
-textBBoxesNum=size(textBBoxes,1);
-for kk=1:textBBoxesNum
-    text_str{kk} = num2str(kk);
-end
-aftertext= insertText(aftertext,textBBoxes(:,1:2),text_str,'FontSize',12,'BoxOpacity',0,'TextColor','red');
-clear text_str
-save_name=[img_value '-morphology-' num2str(ii) '.bmp'];
-imwrite(aftertext,save_name);
+% aftertext = insertShape(g, 'Rectangle', mserBBoxes(:,1:4),'LineWidth',1,'Color','cyan');
+% aftertext = insertShape(aftertext, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==0),1:4),'LineWidth',3,'Color','black');
+% aftertext = insertShape(aftertext, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==1),1:4),'LineWidth',3,'Color','red');
+% aftertext = insertShape(aftertext, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==2),1:4),'LineWidth',3,'Color','yellow');
+% aftertext = insertShape(aftertext, 'Rectangle', textBBoxes( find(textBBoxes(:,5)>2),1:4),'LineWidth',3,'Color','green');
+% textBBoxesNum=size(textBBoxes,1);
+% for kk=1:textBBoxesNum
+%     text_str{kk} = num2str(kk);
+% end
+% aftertext= insertText(aftertext,textBBoxes(:,1:2),text_str,'FontSize',12,'BoxOpacity',0,'TextColor','red');
+% clear text_str
+% save_name=[img_value '-morphology-' num2str(ii) '.bmp'];
+% imwrite(aftertext,save_name);
 end
