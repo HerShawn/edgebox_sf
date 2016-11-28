@@ -26,7 +26,7 @@ num_img = length(dir_img);
 load('initialSfIdx');
 eIdx=[];
 e10Idx=[];
-for indexImg = 233:233
+for indexImg = 1:num_img
     fusionBBox=[];
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -97,7 +97,12 @@ for indexImg = 233:233
     end
     %形态学；每个bboxes里再求mser
     [mserBBoxes,textBBoxes]=MSTB_mser_25(g,textBBoxes,img_value);  
-    %2016-11-27:
+    %2016-11-27:inter：text组间去除冗余（有等级 green、yellow、red）
+    [mserBBoxes,textBBoxes]=textInter_2(g,img_value,textBBoxes,mserBBoxes);
+    %制作分类用正负样本
+    croppedSample(g,textBBoxes,img_value);
+    %保存[mserBBoxes,textBBoxes]
+    saveMserText(mserBBoxes,textBBoxes,img_value);
 end
 
 
