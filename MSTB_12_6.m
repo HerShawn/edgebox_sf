@@ -26,7 +26,7 @@ num_img = length(dir_img);
 load('initialSfIdx');
 eIdx=[];
 e10Idx=[];
-for indexImg = 10:9
+for indexImg = 1:num_img
     fusionBBox=[];
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -95,12 +95,9 @@ for indexImg = 10:9
         img_value
         continue
     end
-    %形态学；每个bboxes里再求mser
-    [mserBBoxes,textBBoxes]=MSTB_mser_28(g,textBBoxes,img_value);  
-    %2016-11-27:inter：text组间去除冗余（有等级 green、yellow、red）
-    [mserBBoxes,textBBoxes]=textInter_28(g,img_value,textBBoxes,mserBBoxes);
-    %2016-11-29：refine
-    textRefine(g,img_value,textBBoxes,mserBBoxes);
+    %
+    textRefine_12_5(g,img_value,textBBoxes);
+   
 end
 
 

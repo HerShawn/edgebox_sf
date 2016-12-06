@@ -7,7 +7,7 @@ for ii=1:textBBoxesNum
     end
     gBbox=g(textBBoxes(ii,2):textBBoxes(ii,2)+textBBoxes(ii,4)-1,:,:);
     mserBBox=textMser(gBbox);
-    boxes=runDetector_refine_11_29(gBbox,img_value,mserBBox,ii);
+    boxes=runDetector_refine_11_30(gBbox,img_value,mserBBox,ii);
     
 end
 end
