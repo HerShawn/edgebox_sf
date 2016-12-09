@@ -26,7 +26,7 @@ num_img = length(dir_img);
 load('initialSfIdx');
 eIdx=[];
 e10Idx=[];
-for indexImg = 1:num_img
+for indexImg = 165:165
     fusionBBox=[];
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -96,7 +96,7 @@ for indexImg = 1:num_img
         continue
     end
     %
-    textRefine_12_5(g,img_value,textBBoxes);
+    textRefine_12_9(g,img_value,textBBoxes);
    
 end
 
