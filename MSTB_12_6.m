@@ -26,7 +26,8 @@ num_img = length(dir_img);
 load('initialSfIdx');
 eIdx=[];
 e10Idx=[];
-for indexImg = 165:165
+yellowRedNums=[];
+for indexImg = 1:num_img
     fusionBBox=[];
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -96,9 +97,12 @@ for indexImg = 165:165
         continue
     end
     %
-    textRefine_12_9(g,img_value,textBBoxes);
-   
+    yellowRedNum=textRefine_12_9(g,img_value,textBBoxes);
+    yellowRedNums=[yellowRedNums;yellowRedNum];
 end
+
+save('yellowRedNums.mat','yellowRedNums');
+
 
 
 
