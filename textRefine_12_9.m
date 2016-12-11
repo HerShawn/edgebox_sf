@@ -1,4 +1,4 @@
-function yellowRedNum=textRefine_12_9(g,img_value,textBBoxes)
+function [yellowRedNum,textBBoxes,bbox]=textRefine_12_9(g,img_value,textBBoxes)
 % img1 = insertShape(g, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==1),1:4),'LineWidth',3,'Color','red');
 % img1 = insertShape(img1, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==2),1:4),'LineWidth',3,'Color','yellow');
 % img1 = insertShape(img1, 'Rectangle', textBBoxes( find(textBBoxes(:,5)>2),1:4),'LineWidth',3,'Color','green');
@@ -8,6 +8,7 @@ function yellowRedNum=textRefine_12_9(g,img_value,textBBoxes)
 % 【1.1】NMS：当textBBoxes存在重叠时，按照等级（绿>黄>红）来NMS
 [~,~,selectedIdx]=selectStrongestBbox(textBBoxes(:,1:4),textBBoxes(:,5),'RatioType','Min','OverlapThreshold',0.9);
 textBBoxes=textBBoxes(selectedIdx,:);
+yellowRedNum=length( find(textBBoxes(:,5)<=2))
 % img2 = insertShape(g, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==1),1:4),'LineWidth',3,'Color','red');
 % img2 = insertShape(img2, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==2),1:4),'LineWidth',3,'Color','yellow');
 % img2 = insertShape(img2, 'Rectangle', textBBoxes( find(textBBoxes(:,5)>2),1:4),'LineWidth',3,'Color','green');
@@ -24,11 +25,10 @@ textBBoxesNum=size(textBBoxes,1);
 img=rgb2gray(g);
 maxH=max(textBBoxes(:,4));
 maxArea=ceil(maxH*maxH*9/16);
-minArea=50;
+minArea=min(floor(size(g,1)/100),floor(size(g,2)/100)).^2;
 [~, mserConnComp] = detectMSERFeatures(img, ...
-    'RegionAreaRange',[minArea maxArea],'ThresholdDelta',2);
-mserStats = regionprops(mserConnComp, 'BoundingBox', 'Eccentricity', ...
-    'Solidity', 'Extent', 'Euler', 'Image');
+    'RegionAreaRange',[minArea maxArea],'ThresholdDelta',1);
+mserStats = regionprops(mserConnComp, 'BoundingBox');
 bbox = vertcat(mserStats.BoundingBox);
 w = bbox(:,3);
 h = bbox(:,4);
@@ -38,23 +38,23 @@ filterIdx = filterIdx | h' > maxH ;
 mserStats(filterIdx) = [];
 clear filterIdx
 bbox = vertcat(mserStats.BoundingBox);
-[bbox,~,~]=selectStrongestBbox(bbox(:,1:4),bbox(:,3).*bbox(:,4),'RatioType','Min','OverlapThreshold',0.9);
+% [bbox,~,~]=selectStrongestBbox(bbox(:,1:4),bbox(:,3).*bbox(:,4),'RatioType','Min','OverlapThreshold',0.9);
 % img3 = insertShape(img2, 'Rectangle', bbox(:,1:4), 'color', 'yellow');
 % saveName=[img_value '-mse.bmp'];
 % imwrite(img3,saveName);
-% 【1.2.2】然后，将mser bboxes和text bboxes联系起来
+% 【1.2.2】然后，将mser bboxes和text bboxes联系起来：也就是90%包裹在text内的mser才与这个text box联系
 textMserOverlapRatio=textMserOverlap(textBBoxes,bbox);
 bboxNum=size(bbox,1);
 bboxIdx=zeros(bboxNum,1);
 bbox=[bbox bboxIdx];
-removeIdx=[];
+% removeIdx=[];
 for ii=1:textBBoxesNum
     %textBBoxes(ii,6)记录该text包含的mser数目
     textBBoxes(ii,6)=length( find(textMserOverlapRatio(ii,:)));
     mserBBoxes=find(textMserOverlapRatio(ii,:));
-    if textBBoxes(ii,5)<=2 && textBBoxes(ii,6)==0
-        removeIdx=[removeIdx ii];
-    end
+%     if textBBoxes(ii,5)<=2 && textBBoxes(ii,6)==0
+%         removeIdx=[removeIdx ii];
+%     end
     if isempty(mserBBoxes)
         continue
     end
@@ -63,9 +63,8 @@ for ii=1:textBBoxesNum
         bbox(mserBBoxes(jj),5)=ii;
     end
 end
-yellowRedNum=length( find(textBBoxes(:,5)<=2));
-% 【1.2.3】将不含mser的红、黄textBBoxes去掉
-textBBoxes(removeIdx,:)=[];
+%  %不合适 【1.2.3】将不含mser的红、黄textBBoxes去掉
+% textBBoxes(removeIdx,:)=[];
 img2 = insertShape(g, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==1),1:4),'LineWidth',3,'Color','red');
 img2 = insertShape(img2, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==2),1:4),'LineWidth',3,'Color','yellow');
 img2 = insertShape(img2, 'Rectangle', textBBoxes( find(textBBoxes(:,5)>2),1:4),'LineWidth',3,'Color','green');
@@ -79,7 +78,8 @@ for kk=1:textBBoxesNum
 end
 img2= insertText(img2,textBBoxes(:,1:2),text_str,'FontSize',12,'BoxOpacity',0,'TextColor','red');
 clear text_str
-img3 = insertShape(img2, 'Rectangle', bbox(:,1:4), 'color', 'yellow');
+img3 = insertShape(img2, 'Rectangle', bbox(:,1:4), 'color', 'cyan');
+img_value
 saveName=[img_value '-mse.bmp'];
 imwrite(img3,saveName);
 %% textBBoxes间如何算作一行（可拼接）；应该再结合上距离信息？
