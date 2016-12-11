@@ -97,7 +97,7 @@ for indexImg = 1:num_img
         continue
     end
     %
-    [yellowRedNum,textBBoxes,mserBBoxes]=textRefine_12_9(g,img_value,textBBoxes);
+    [yellowRedNum,textBBoxes,mserBBoxes]=textRefine_12_12(g,img_value,textBBoxes);
     yellowRedNums=[yellowRedNums;yellowRedNum];
 end
 
