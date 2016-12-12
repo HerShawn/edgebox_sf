@@ -45,7 +45,7 @@ ymin = accumarray(componentIndices', ymin, [], @min);
 ymax = accumarray(componentIndices', ymax, [], @max);
 %txtBBoxes就是做好的组
 txtBBoxes=[ones(length(ymin),1)  ymin   ones(length(ymin),1)*size(g,2)  ymax-ymin+1 ];
-%
+% 【显示一】 txtBBoxes组
 g = insertShape(g, 'FilledRectangle', txtBBoxes(:,1:4), 'color', 'white','Opacity',0.5);
 %不在txtBBoxes组内的bbox要全部去掉
 txtBBoxOverlapRatio=txtBBoxOverlap(txtBBoxes,bbox);
@@ -56,23 +56,49 @@ mserStats(filterIdx) = [];
 clear filterIdx
 bbox = vertcat(mserStats.BoundingBox);
 
-% 【2.3】 text内部的mser，NMS：没有/两层 则删去该text
+% 【2.3】 将mser与text Bbox联系起来
 textMserOverlapRatio=textMserOverlap(textBBoxes,bbox);
 bboxNum=size(bbox,1);
 bboxIdx=zeros(bboxNum,1);
 bbox=[bbox bboxIdx];
 for ii=1:textBBoxesNum
-    %textBBoxes(ii,6)记录该text包含的mser数目
-    textBBoxes(ii,6)=length( find(textMserOverlapRatio(ii,:)));
     mserBBoxes=find(textMserOverlapRatio(ii,:));
     if isempty(mserBBoxes)
         continue
     end
-    %bbox记录该bbox属于哪个text
+    %bbox记录该bbox属于哪个text(在内部)，或在text外部（bbox（:,5）设为0）
     for jj=1:length(mserBBoxes)
         bbox(mserBBoxes(jj),5)=ii;
     end
 end
+
+% 【2.4】 将分组txt,text框，及mser联系起来
+% 在IntraTextBbox和bbox内分别NMS，就不会NMS掉重要的bbox
+IntraTextBboxs=[];
+for ii=1:size(txtBBoxes,1)
+    textIdx=find(textBBoxes(:,7)==ii);
+    for jj=1:length(textIdx)
+        IntraTextBbox=bbox(find(bbox(:,5)==textIdx(jj)),:);
+        %mser被分成两组，凡是不在text内的mser都在bbox中
+        bbox(find(bbox(:,5)==textIdx(jj)),:)=[];
+        [~,~,selectedIntraIdx]=selectStrongestBbox(IntraTextBbox(:,1:4),IntraTextBbox(:,3).*IntraTextBbox(:,4),'RatioType','Min','OverlapThreshold',0.9);
+        IntraTextBbox=IntraTextBbox(selectedIntraIdx,:);
+        %mser被分成两组，在text内的mser都在IntraTextBboxs内，且按面积大小来NMS
+        IntraTextBboxs=[IntraTextBboxs;IntraTextBbox];
+        %textBBoxes(ii,6)记录该text包含的mser数目
+        textBBoxes(textIdx(jj),6)=size(IntraTextBbox,1);
+    end
+end
+[~,~,selectedBboxIdx]=selectStrongestBbox(bbox(:,1:4),bbox(:,3).*bbox(:,4),'RatioType','Min','OverlapThreshold',0.9);
+bbox=bbox(selectedBboxIdx,:);
+
+% 【2.5】没有mser/上下两层mser/仅有一个mser且左右领域无mser的text bboxes去掉 
+
+%% ####最关键算法【3】: 迭代refine textBBoxes
+
+
+
+%% 【显示二】 每个textBBoxes
 img2 = insertShape(g, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==1),1:4),'LineWidth',3,'Color','red');
 img2 = insertShape(img2, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==2),1:4),'LineWidth',3,'Color','yellow');
 img2 = insertShape(img2, 'Rectangle', textBBoxes( find(textBBoxes(:,5)>2),1:4),'LineWidth',3,'Color','green');
@@ -86,12 +112,10 @@ for kk=1:textBBoxesNum
 end
 img2= insertText(img2,textBBoxes(:,1:2),text_str,'FontSize',12,'BoxOpacity',0,'TextColor','red');
 clear text_str
+% 【显示三】 每个 mser bboxes
 img3 = insertShape(img2, 'Rectangle', bbox(:,1:4), 'color', 'cyan');
+img4 = insertShape(img3, 'Rectangle', IntraTextBboxs(:,1:4), 'color', 'black');
 img_value
 saveName=[img_value '-mse.bmp'];
-imwrite(img3,saveName);
-
-
-%% ####最关键算法【3】: 迭代refine textBBoxes
-
+imwrite(img4,saveName);
 end
