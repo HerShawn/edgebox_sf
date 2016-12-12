@@ -2,16 +2,20 @@ function [yellowRedNum,textBBoxes,bbox]=textRefine_12_12(g,img_value,textBBoxes)
 
 
 %% 【1】：预处理
+
 % 【1.1】{红、黄}数目超过10个时删去
+
 % 【1.2】当textBBoxes存在90%的重叠时，按照等级（绿>黄>红）来NMS
 [~,~,selectedIdx]=selectStrongestBbox(textBBoxes(:,1:4),textBBoxes(:,5),'RatioType','Min','OverlapThreshold',0.9);
 textBBoxes=textBBoxes(selectedIdx,:);
 yellowRedNum=length( find(textBBoxes(:,5)<=2))
 textBBoxesNum=size(textBBoxes,1);
+
 % 【1.3】{红、黄}与绿交叠超10%时去掉
 
 
 %% 【2】: mser分组
+
 % 【2.1】提取mser
 img=rgb2gray(g);
 maxH=max(textBBoxes(:,4));
@@ -25,11 +29,33 @@ w = bbox(:,3);
 h = bbox(:,4);
 aspectRatio = w./h;
 filterIdx = aspectRatio' > 2;
-% 【2.2】r在textBBoxes组外的bbox全部去掉: 先做好textBBoxes组，然后去bbox
+
+% ##【2.2】在textBBoxes组外的bbox全部去掉: 先做好textBBoxes组，然后去bbox
+txtOverlapRatio=txtOverlap(textBBoxes,textBBoxes);
+n = size(txtOverlapRatio,1);
+txtOverlapRatio(1:n+1:n^2) = 0;
+gh = graph(txtOverlapRatio);
+componentIndices = conncomp(gh);
+%textBBoxes(:,7)记录着textBBoxes属于哪个txtBBoxes组
+textBBoxes=[textBBoxes componentIndices'];
+%
+ymin=textBBoxes(:,2);
+ymax = ymin + textBBoxes(:,4) - 1;
+ymin = accumarray(componentIndices', ymin, [], @min);
+ymax = accumarray(componentIndices', ymax, [], @max);
+%txtBBoxes就是做好的组
+txtBBoxes=[ones(length(ymin),1)  ymin   ones(length(ymin),1)*size(g,2)  ymax-ymin+1 ];
+%
+g = insertShape(g, 'FilledRectangle', txtBBoxes(:,1:4), 'color', 'white','Opacity',0.5);
+%不在txtBBoxes组内的bbox要全部去掉
+txtBBoxOverlapRatio=txtBBoxOverlap(txtBBoxes,bbox);
+filterIdx = filterIdx | sum(txtBBoxOverlapRatio)==0;
+%
 filterIdx = filterIdx | h' > maxH ;
 mserStats(filterIdx) = [];
 clear filterIdx
 bbox = vertcat(mserStats.BoundingBox);
+
 % 【2.3】 text内部的mser，NMS：没有/两层 则删去该text
 textMserOverlapRatio=textMserOverlap(textBBoxes,bbox);
 bboxNum=size(bbox,1);
@@ -66,6 +92,6 @@ saveName=[img_value '-mse.bmp'];
 imwrite(img3,saveName);
 
 
-%% 【3】: 迭代refine textBBoxes
+%% ####最关键算法【3】: 迭代refine textBBoxes
 
 end
