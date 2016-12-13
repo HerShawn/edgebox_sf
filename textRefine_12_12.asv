@@ -72,7 +72,7 @@ for ii=1:textBBoxesNum
     end
 end
 
-% 【2.4】 将分组txt,text框，及mser联系起来
+% 【2.4】 将分组txt,text框，及mser联系起来  ####？是否有必要按一组组来？这个以后再看！！[有个理由是因为一组可以用CNN response]
 % 在IntraTextBbox和bbox内分别NMS，就不会NMS掉重要的bbox
 IntraTextBboxs=[];
 for ii=1:size(txtBBoxes,1)
@@ -92,9 +92,10 @@ end
 [~,~,selectedBboxIdx]=selectStrongestBbox(bbox(:,1:4),bbox(:,3).*bbox(:,4),'RatioType','Min','OverlapThreshold',0.9);
 bbox=bbox(selectedBboxIdx,:);
 
+% 【2.5】没有mser/上下两层mser/仅有一个mser且左右领域无mser的text bboxes去掉 
 
 %% ####最关键算法【3】: 迭代refine textBBoxes
-
+textMserRefine(IntraTextBbox,textBBoxes,bbox);
 
 
 %% 【显示二】 每个textBBoxes
