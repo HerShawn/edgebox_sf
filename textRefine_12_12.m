@@ -92,10 +92,11 @@ end
 [~,~,selectedBboxIdx]=selectStrongestBbox(bbox(:,1:4),bbox(:,3).*bbox(:,4),'RatioType','Min','OverlapThreshold',0.9);
 bbox=bbox(selectedBboxIdx,:);
 
-% 【2.5】没有mser/上下两层mser/仅有一个mser且左右领域无mser的text bboxes去掉 
+% 【2.5】没有mser/上下两层mser/仅有一个mser且左右领域无mser的text bboxes去掉
+% ###另外，text内的mser bboxes也要清理下（几行？每行的倾斜度？）
 
 %% ####最关键算法【3】: 迭代refine textBBoxes
-textMserRefine(g,IntraTextBbox,textBBoxes,bbox);
+textMserRefine(g,IntraTextBboxs,textBBoxes,bbox);
 
 
 %% 【显示二】 每个textBBoxes

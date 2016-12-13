@@ -27,7 +27,7 @@ load('initialSfIdx');
 eIdx=[];
 e10Idx=[];
 yellowRedNums=[];
-for indexImg = 46:46
+for indexImg = 199:199
     fusionBBox=[];
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
