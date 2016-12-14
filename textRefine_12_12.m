@@ -96,7 +96,7 @@ bbox=bbox(selectedBboxIdx,:);
 % ###另外，text内的mser bboxes也要清理下（几行？每行的倾斜度？）
 
 %% ####最关键算法【3】: 迭代refine textBBoxes
-textMserRefine(g,IntraTextBboxs,textBBoxes,bbox);
+[IntraTextBboxs,textBBoxes,bbox]=textMserRefine(g,IntraTextBboxs,textBBoxes,bbox);
 
 
 %% 【显示二】 每个textBBoxes
