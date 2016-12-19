@@ -1,17 +1,17 @@
-function [yellowRedNum,textBBoxes,bbox]=textRefine_12_12(g,img_value,textBBoxes)
+function [yellowRedNum,textBBoxes,bbox]=textRefine_12_18(g,img_value,textBBoxes)
 
 
 %% 【1】：预处理
 
-% 【1.1】{红、黄}数目超过10个时删去
+% #####【1.0】应该按照绿、红、黄的数目，位置分布，设定一些规则  
 
-% 【1.2】当textBBoxes存在90%的重叠时，按照等级（绿>黄>红）来NMS
+% 【1.1】当textBBoxes存在90%的重叠时，按照等级（绿>黄>红）来NMS
 [~,~,selectedIdx]=selectStrongestBbox(textBBoxes(:,1:4),textBBoxes(:,5),'RatioType','Min','OverlapThreshold',0.9);
 textBBoxes=textBBoxes(selectedIdx,:);
-yellowRedNum=length( find(textBBoxes(:,5)<=2))
+yellowRedNum=length( find(textBBoxes(:,5)<=2));
 textBBoxesNum=size(textBBoxes,1);
 
-% 【1.3】{红、黄}与绿交叠超10%时去掉
+% #####【1.2】{红、黄}与绿交叠时去掉，干扰到高等级text的操作； 例如87,229等过量红、黄的处理。
 
 
 %% 【2】: mser分组
@@ -92,12 +92,16 @@ end
 [~,~,selectedBboxIdx]=selectStrongestBbox(bbox(:,1:4),bbox(:,3).*bbox(:,4),'RatioType','Min','OverlapThreshold',0.9);
 bbox=bbox(selectedBboxIdx,:);
 
-% 【2.5】没有mser/上下两层mser/仅有一个mser且左右领域无mser的text bboxes去掉
-% ###另外，text内的mser bboxes也要清理下（几行？每行的倾斜度？）
+% #####【2.5】{红、黄}的text 1.未提取到bbox；2.提取到杂乱的bbox（包括上下两层bbox）这样的；
+% 另外，每种text内的mser bboxes也要清理下（几行？每行的倾斜度？）
+
+
 
 %% ####最关键算法【3】: 迭代refine textBBoxes
-% [IntraTextBboxs,textBBoxes,bbox]=textMserRefine(g,IntraTextBboxs,textBBoxes,bbox);
+[IntraTextBboxs,textBBoxes,bbox]=textMserRefine(g,IntraTextBboxs,textBBoxes,bbox);
 
+% 3.2 
+[textBBoxes]=falseAlarmRemoval(g,IntraTextBboxs,textBBoxes,bbox,txtBBoxes);
 
 %% 【显示二】 每个textBBoxes
 img2 = insertShape(g, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==1),1:4),'LineWidth',3,'Color','red');

@@ -27,7 +27,7 @@ load('initialSfIdx');
 eIdx=[];
 e10Idx=[];
 yellowRedNums=[];
-for indexImg = 199:199
+for indexImg = 1:num_img
     fusionBBox=[];
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -55,6 +55,7 @@ for indexImg = 199:199
         e10Idx=[e10Idx indexImg];
     end
     if((~exist([img_value '-' num2str(E_thresh) '.mat'], 'file'))&&(~exist([img_value '-' num2str(E_thresh+10) '.mat'], 'file')))
+        yellowRedNums=[yellowRedNums;-1];
         continue
     end
     %% ¡¾2¡¿ÎÄ±¾ÐÐ
@@ -96,8 +97,7 @@ for indexImg = 199:199
         img_value
         continue
     end
-    %
-    [yellowRedNum,textBBoxes,mserBBoxes]=textRefine_12_12(g,img_value,textBBoxes);
+    [yellowRedNum,textBBoxes,mserBBoxes]=textRefine_12_19(g,img_value,textBBoxes);
     yellowRedNums=[yellowRedNums;yellowRedNum];
 end
 

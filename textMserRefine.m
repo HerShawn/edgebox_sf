@@ -3,24 +3,24 @@ function [IntraTextBboxs,textBBoxes,bbox]= textMserRefine(g,IntraTextBboxs,textB
 for ii=1:size(textBBoxes,1)
     
     while(1)
-        %1.扩展text,得到tmp
+        %3.1.扩展text,得到tmp
         tmp_x=max(1,textBBoxes(ii,1)-textBBoxes(ii,4));
         tmp_x2=min(textBBoxes(ii,1)+textBBoxes(ii,3)+textBBoxes(ii,4),size(g,2));
         tmp_w=tmp_x2-tmp_x;
         tmp=[tmp_x textBBoxes(ii,2) tmp_w textBBoxes(ii,4)];
-        %2.求与tmp有overlap的mser bbox
+        %3.2.求与tmp有overlap的mser bbox
         Intra=IntraTextBboxs(IntraTextBboxs(:,5)==ii,:);
         if isempty(Intra)
             break;
         end
         tmpBboxRatio=bboxOverlapRatio_refine(tmp,bbox(:,1:4),Intra);
         bboxIdx=find(tmpBboxRatio);
-        %3.终止条件1：text未探索到一个bbox，自然不再扩张，故退出循环
+        %3.3.终止条件1：text未探索到一个bbox，自然不再扩张，故退出循环
         if isempty(bboxIdx)
             break
         end
-        %##【4.】计算tmp与探索到的bbox之间的相似度
-        %4.1tmp的颜色均值和笔划宽度均值
+        %##【3.4.】计算tmp与探索到的bbox之间的相似度
+        %3.4.1tmp的颜色均值和笔划宽度均值
         img=g(textBBoxes(ii,2):textBBoxes(ii,2)+textBBoxes(ii,4)-1,textBBoxes(ii,1):textBBoxes(ii,1)+textBBoxes(ii,3)-1,:);
         maxArea=floor(median(Intra(:,3).*Intra(:,4)));
         minArea=ceil(0.1*maxArea);
@@ -86,13 +86,13 @@ for ii=1:size(textBBoxes,1)
             title('text')
             hold off
         end
-        %4.2如果text里求不出颜色均值和笔划宽度，那就不再扩张，直接跳出
+        %3.4.2如果text里求不出颜色均值和笔划宽度，那就不再扩张，直接跳出
         if isempty(textFeature)
             break;
         end
         medianTextFeature=[median(textFeature(:,1)) median(textFeature(:,2)) median(textFeature(:,3)) ...
             median(textFeature(:,4)) median(textFeature(:,5)) median(textFeature(:,6)) ];
-        %4.3 每个待纳入bbox的颜色均值和笔划宽度均值
+        %3.4.3 每个待纳入bbox的颜色均值和笔划宽度均值
         acceptBboxIdx=[];
         for k=1:numel(bboxIdx)
             mserBbox=bbox(bboxIdx(k),:);
@@ -169,14 +169,14 @@ for ii=1:size(textBBoxes,1)
             end
         end
         
-        %5. 若不存在与text相似的bbox，则推出循环。
+        %3.5. 若不存在与text相似的bbox，则推出循环。
         if isempty(acceptBboxIdx)
             close all
             break;
         end
         
-        %6.纳入bbox到text中：text外观改变；将纳入的bbox从bbox集合移到intra集合中
-        %6.1 改变text外观
+        %3.6.纳入bbox到text中：text外观改变；将纳入的bbox从bbox集合移到intra集合中
+        %3.6.1 改变text外观
         for t=1:numel(acceptBboxIdx)
             xmin=min(textBBoxes(ii,1),bbox(acceptBboxIdx(t),1));
             ymin=min(textBBoxes(ii,2),bbox(acceptBboxIdx(t),2));
@@ -187,12 +187,17 @@ for ii=1:size(textBBoxes,1)
             textBBoxes(ii,3)=xmax-xmin+1;
             textBBoxes(ii,4)=ymax-ymin+1;
         end
-        %6.2 将纳入的bbox从bbox集合移到intra集合中
+        %3.6.2 将纳入的bbox从bbox集合移到intra集合中
         tmpBbox=bbox(acceptBboxIdx,:);
         tmpBbox(:,5)=ii;
         IntraTextBboxs=[IntraTextBboxs ;tmpBbox];
         bbox(acceptBboxIdx,:)=[];
         close all
     end
+    
+    % ##### 【3.7】对红、黄text进行refine后，若textBBoxes(:,6)仍不足3个，则去掉该红、黄text
+    %除非在该textBBoxes所在行，存在有绿，或者多个text； 最后：还未去掉的红、黄，和绿一起用CNN response处理
+    
+    
 end
 end

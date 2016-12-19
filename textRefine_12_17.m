@@ -1,4 +1,4 @@
-function [yellowRedNum,textBBoxes,bbox]=textRefine_12_12(g,img_value,textBBoxes)
+function [yellowRedNum,textBBoxes,bbox]=textRefine_12_17(g,img_value,textBBoxes)
 
 
 %% °æ1°ø£∫‘§¥¶¿Ì
