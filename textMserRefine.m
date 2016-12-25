@@ -78,14 +78,14 @@ for ii=1:size(textBBoxes,1)
         mserStats(strokeWidthFilterIdx) = [];
         textFeature(strokeWidthFilterIdx,:)=[];
         clear strokeWidthFilterIdx
-        if ~isempty(mserRegions)
-            figure
-            imshow(img)
-            hold on
-            plot(mserRegions, 'showPixelList', true,'showEllipses',false)
-            title('text')
-            hold off
-        end
+%         if ~isempty(mserRegions)
+%             figure
+%             imshow(img)
+%             hold on
+%             plot(mserRegions, 'showPixelList', true,'showEllipses',false)
+%             title('text')
+%             hold off
+%         end
         %3.4.2如果text里求不出颜色均值和笔划宽度，那就不再扩张，直接跳出
         if isempty(textFeature)
             break;
@@ -137,14 +137,14 @@ for ii=1:size(textBBoxes,1)
             mserStats(strokeWidthFilterIdx) = [];
             bboxFeature(strokeWidthFilterIdx,:)=[];
             clear strokeWidthFilterIdx
-            if ~isempty(mserRegions)
-                figure
-                imshow(im)
-                hold on
-                plot(mserRegions, 'showPixelList', true,'showEllipses',false)
-                title('bbox')
-                hold off
-            end
+%             if ~isempty(mserRegions)
+%                 figure
+%                 imshow(im)
+%                 hold on
+%                 plot(mserRegions, 'showPixelList', true,'showEllipses',false)
+%                 title('bbox')
+%                 hold off
+%             end
             if isempty(bboxFeature)
                 continue;
             end
@@ -194,6 +194,9 @@ for ii=1:size(textBBoxes,1)
         bbox(acceptBboxIdx,:)=[];
         close all
     end
+    
+    %3.6.3 更新textBBoxes内含bbox的数目
+    textBBoxes(ii,6)=length(find(IntraTextBboxs(:,5)==ii));
     
     % ##### 【3.7】对红、黄text进行refine后，若textBBoxes(:,6)仍不足3个，则去掉该红、黄text
     %除非在该textBBoxes所在行，存在有绿，或者多个text； 最后：还未去掉的红、黄，和绿一起用CNN response处理

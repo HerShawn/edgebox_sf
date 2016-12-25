@@ -1,4 +1,4 @@
-function [yellowRedNum,textBBoxes,bbox]=textRefine_12_19(g,img_value,textBBoxes)
+function [textBBoxes,bbox,IntraTextBboxs,txtBBoxes]=textRefine_12_21(g,img_value,textBBoxes)
 
 
 %% 【1】：预处理
@@ -46,7 +46,8 @@ ymax = accumarray(componentIndices', ymax, [], @max);
 %txtBBoxes就是做好的组
 txtBBoxes=[ones(length(ymin),1)  ymin   ones(length(ymin),1)*size(g,2)  ymax-ymin+1 ];
 % 【显示一】 txtBBoxes组
-gShape = insertShape(g, 'FilledRectangle', txtBBoxes(:,1:4), 'color', 'white','Opacity',0.5);
+g2=g;
+g = insertShape(g, 'FilledRectangle', txtBBoxes(:,1:4), 'color', 'white','Opacity',0.5);
 %不在txtBBoxes组内的bbox要全部去掉
 txtBBoxOverlapRatio=txtBBoxOverlap(txtBBoxes,bbox);
 filterIdx = filterIdx | sum(txtBBoxOverlapRatio)==0;
@@ -105,16 +106,8 @@ if yellowRedNum>9
 [textBBoxes]=falseAlarmRemoval(g,IntraTextBboxs,textBBoxes,bbox,txtBBoxes);
 end
 
-for jj=1:size(txtBBoxes,1)
-    bBox=txtBBoxes(jj,1:4);
-    imgText=g(bBox(2):bBox(2)+bBox(4)-1,bBox(1):bBox(1)+bBox(3)-1,:);
-    saveName=[img_value '-' num2str(jj) '.jpg'];
-    imwrite(imgText,saveName);
-end
-
-
 %% 【4】遍历txt，进行一次cnn response,与该txt有关的txt全部参与
-% txtSegment(g,IntraTextBboxs,textBBoxes,bbox,txtBBoxes);
+txtSegment(g2,IntraTextBboxs,textBBoxes,bbox,txtBBoxes,img_value);
 
 %% 【显示二】 每个textBBoxes
 textBBoxesNum=size(textBBoxes,1);
@@ -122,7 +115,7 @@ if textBBoxesNum==0
     img_value
     img2=g;
 else
-    img2 = insertShape(gShape, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==1),1:4),'LineWidth',3,'Color','red');
+    img2 = insertShape(g, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==1),1:4),'LineWidth',3,'Color','red');
     img2 = insertShape(img2, 'Rectangle', textBBoxes( find(textBBoxes(:,5)==2),1:4),'LineWidth',3,'Color','yellow');
     img2 = insertShape(img2, 'Rectangle', textBBoxes( find(textBBoxes(:,5)>2),1:4),'LineWidth',3,'Color','green');
     for kk=1:textBBoxesNum
@@ -137,4 +130,8 @@ img3 = insertShape(img2, 'Rectangle', bbox(:,1:4), 'color', 'cyan');
 img4 = insertShape(img3, 'Rectangle', IntraTextBboxs(:,1:4), 'color', 'black');
 saveName=[img_value '-mse.bmp'];
 imwrite(img4,saveName);
+
+%
+filename=[img_value '-mse.mat'];
+save(filename, 'textBBoxes', 'bbox', 'IntraTextBboxs', 'txtBBoxes');
 end

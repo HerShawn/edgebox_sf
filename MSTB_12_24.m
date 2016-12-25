@@ -26,8 +26,7 @@ num_img = length(dir_img);
 load('initialSfIdx');
 eIdx=[];
 e10Idx=[];
-yellowRedNums=[];
-for indexImg = 1:num_img
+for indexImg = 160:160
     fusionBBox=[];
     img_value = dir_img(indexImg).name;
     img_value = img_value(1:end-4);
@@ -55,7 +54,6 @@ for indexImg = 1:num_img
         e10Idx=[e10Idx indexImg];
     end
     if((~exist([img_value '-' num2str(E_thresh) '.mat'], 'file'))&&(~exist([img_value '-' num2str(E_thresh+10) '.mat'], 'file')))
-        yellowRedNums=[yellowRedNums;-1];
         continue
     end
     %% ¡¾2¡¿ÎÄ±¾ÐÐ
@@ -92,16 +90,26 @@ for indexImg = 1:num_img
     xmax = accumarray(componentIndices', xmax, [], @max);
     ymax = accumarray(componentIndices', ymax, [], @max);
     textBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1 textBBoxesWeight mserNum];
+    
+    txtNum=size(textBBoxes,1);
+    filterIdx=zeros(1,txtNum);
+    for ii=1:txtNum
+        bBox=textBBoxes(ii,:);
+        img=g(bBox(2):bBox(2)+bBox(4)-1,bBox(1):bBox(1)+bBox(3)-1,:);
+        score=textClassifier(img);
+        filterIdx(ii)=score;
+    end
+    textBBoxes= textBBoxes(find(filterIdx==1),:);
+    
     aftertextNum=size(textBBoxes,1);
     if aftertextNum==0
         img_value
         continue
     end
-    [yellowRedNum,textBBoxes,mserBBoxes]=textRefine_12_21(g,img_value,textBBoxes);
-    yellowRedNums=[yellowRedNums;yellowRedNum];
+    
+   textRefine_12_21(g,img_value,textBBoxes);
 end
 
-save('yellowRedNums.mat','yellowRedNums');
 
 
 
