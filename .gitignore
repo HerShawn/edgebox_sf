@@ -5,10 +5,10 @@
 /piotr_toolbox/*
 /models/*
 /BSR/*
-/detectorDemo/*
 /finetune/*
 /model_release/*
 /export_fig/*
+/detectorDemo/*
 
 *.jpg
 *.txt

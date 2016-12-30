@@ -108,21 +108,21 @@ end
 
 %% 【4】遍历txt，进行一次cnn response,与该txt有关的txt全部参与
 response=txtSegment(g2,IntraTextBboxs,textBBoxes,bbox,txtBBoxes,img_value);
-% if isempty(response.bbox)
-%  return
-% end
-% bboxes = response.bbox;
-% spaces = response.spaces;
-% h=figure;imshow(g2);
-% for i=1:size(bboxes, 1)
-%         rectangle('Position', bboxes(i, 1:4), 'EdgeColor', 'g', 'LineWidth', 2);       
-%         spaceLocations = sort(spaces(i).locations);
-%         for j=1:length(spaceLocations)
-%             rectangle('Position', [bboxes(i,1) + spaceLocations(j), bboxes(i,2), 2, bboxes(i,4)], 'EdgeColor', 'b', 'FaceColor', 'b');
-%         end
-% end
-% imgname=['D:\\sf\\' img_value '.jpg'];
-% saveas(h,imgname);
+if isempty(response.bbox)
+ return
+end
+bboxes = response.bbox;
+spaces = response.spaces;
+h=figure;imshow(g2);
+for i=1:size(bboxes, 1)
+        rectangle('Position', bboxes(i, 1:4), 'EdgeColor', 'g', 'LineWidth', 2);       
+        spaceLocations = sort(spaces(i).locations);
+        for j=1:length(spaceLocations)
+            rectangle('Position', [bboxes(i,1) + spaceLocations(j), bboxes(i,2), 2, bboxes(i,4)], 'EdgeColor', 'b', 'FaceColor', 'b');
+        end
+end
+imgname=['D:\\sf\\' img_value '.jpg'];
+saveas(h,imgname);
 
 
 % matname=['F:\\SceneTextCNN_demo\\precomputedLineBboxes\\ICDARTest\\' img_value '.mat' ];
